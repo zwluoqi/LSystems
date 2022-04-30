@@ -37,22 +37,22 @@ namespace LSystem.Scripts
                 // 生成规则：1. X→F+[[X]-X]-F[-FX]+X; 2.F→FF
 
                 F(iter+1);
-                Rotation(shapeSetting.angle);
+                RotationF(shapeSetting);
                 PushEnv();
                 PushEnv();
                 A(iter+1);
                 PopEvn();
-                Rotation(-shapeSetting.angle);
+                RotationB(shapeSetting);
                 A(iter+1);
                 PopEvn();
-                Rotation(-shapeSetting.angle);
+                RotationB(shapeSetting);
                 F(iter+1);
                 PushEnv();
-                Rotation(-shapeSetting.angle);
+                RotationB(shapeSetting);
                 F(iter+1);
                 A(iter+1);
                 PopEvn();
-                Rotation(shapeSetting.angle);
+                RotationF(shapeSetting);
                 A(iter+1);
             };
 

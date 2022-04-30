@@ -28,13 +28,13 @@ namespace LSystem.Scripts
                 }
 
                 PushEnv();
-                Rotation(shapeSetting.angle);
+                RotationF(shapeSetting);
                 F(iter+1);
                 A(iter+1);
                 PopEvn();
             
                 PushEnv();
-                Rotation(-shapeSetting.angle);
+                RotationB(shapeSetting);
                 F(iter+1);
                 A(iter+1);
                 PopEvn();
@@ -48,5 +48,6 @@ namespace LSystem.Scripts
         
             return generateMeshData;
         }
+
     }
 }

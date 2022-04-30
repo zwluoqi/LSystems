@@ -83,6 +83,8 @@ public abstract class IGenerateImp
         new Vector3(0, 1, 1),
     };
 
+    private Vector3[] tmpRect = new Vector3[8];
+
 
     private LsystemEnv curEvn = new LsystemEnv();
     private Stack<LsystemEnv> _stack = new Stack<LsystemEnv>();
@@ -120,13 +122,21 @@ public abstract class IGenerateImp
     {
         int startIndex = generateMeshData.vector3s.Count;
 
+        // for (int i = 0; i < 4; i++)
+        // {
+        //     generateMeshData.vector3s.Add(rect[i]);
+        // }
+        // for (int i = 0; i < 4; i++)
+        // {
+        //     generateMeshData.vector3s.Add(forwardRect[i]);
+        // }
         for (int i = 0; i < 4; i++)
         {
-            generateMeshData.vector3s.Add(rect[i]);
+            tmpRect[i] = rect[i];
         }
         for (int i = 0; i < 4; i++)
         {
-            generateMeshData.vector3s.Add(forwardRect[i]);
+            tmpRect[i+4] = forwardRect[i];
         }
         
         //0,1,2,3
@@ -147,20 +157,40 @@ public abstract class IGenerateImp
 
     private void AddCellFace(ref GenerateMeshData generateMeshData,int startIndex,int i0, int i1, int i2, int i3)
     {
-        generateMeshData.triangents.Add(startIndex+i0);
-        generateMeshData.triangents.Add(startIndex+i3);
-        generateMeshData.triangents.Add(startIndex+i2);
+        startIndex = generateMeshData.vector3s.Count; 
+        generateMeshData.vector3s.Add(tmpRect[i0]);
+        generateMeshData.vector3s.Add(tmpRect[i1]);
+        generateMeshData.vector3s.Add(tmpRect[i2]);
+        generateMeshData.vector3s.Add(tmpRect[i3]);
         
-        generateMeshData.triangents.Add(startIndex+i0);
-        generateMeshData.triangents.Add(startIndex+i2);
-        generateMeshData.triangents.Add(startIndex+i1);
+        generateMeshData.triangents.Add(startIndex+0);
+        generateMeshData.triangents.Add(startIndex+3);
+        generateMeshData.triangents.Add(startIndex+2);
+        
+        generateMeshData.triangents.Add(startIndex+0);
+        generateMeshData.triangents.Add(startIndex+2);
+        generateMeshData.triangents.Add(startIndex+1);
     }
 
-    protected  void Rotation(float angle)
+    
+      
+    protected void RotationF(ShapeSetting shapeSetting)
     {
-        var noise = Unity.Mathematics.noise.snoise(curEvn.pos);
+        Rotation(shapeSetting.rotationFrequency, shapeSetting.angle);
+    }
+
+    
+    protected  void RotationB(ShapeSetting shapeSetting)
+    {
+        Rotation(shapeSetting.rotationFrequency, -shapeSetting.angle);
+    }
+    
+    void Rotation(float frequency,float angle)
+    {
+        var noise = Unity.Mathematics.noise.snoise(frequency*curEvn.pos);
         noise = (noise + 1) * 0.5f;
-        var dir = Vector3.Lerp(Vector3.forward, Vector3.right, noise);
+        var dirAngle = Mathf.Lerp(-Mathf.PI, Mathf.PI, noise);
+        Vector3 dir = new Vector3(Mathf.Cos(dirAngle), 0, Mathf.Sin(dirAngle));
         var rotation = Quaternion.AngleAxis(angle, dir);
         curEvn.up =  rotation * curEvn.up;
         curEvn.right = rotation * curEvn.right;

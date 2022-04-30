@@ -116,12 +116,12 @@ namespace LSystem.Scripts
                             stringBuilder.AppendLine("PopEvn");
                             break;
                         case '+':
-                            Rotation(shapeSetting.angle);
-                            stringBuilder.AppendLine("Rotation(shapeSetting.angle)");
+                            RotationF(shapeSetting);
+                            stringBuilder.AppendLine("RotationF(shapeSetting)");
                             break;
                         case '-':
-                            Rotation(-shapeSetting.angle);
-                            stringBuilder.AppendLine("Rotation(-shapeSetting.angle)");
+                            RotationB(shapeSetting);
+                            stringBuilder.AppendLine("RotationB(shapeSetting)");
                             break;
                         default:
                             if (totalDefine.ContainsKey(key))
