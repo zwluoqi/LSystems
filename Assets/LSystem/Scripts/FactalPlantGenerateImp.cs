@@ -19,7 +19,7 @@ namespace LSystem.Scripts
                 {
                     UpdateRect(shapeSetting);
                     AddCell(ref generateMeshData);
-                    UpdatePos(shapeSetting.size);
+                    UpdatePos(shapeSetting);
                 }
                 else
                 {

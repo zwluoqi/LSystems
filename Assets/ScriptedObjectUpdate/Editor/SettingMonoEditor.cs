@@ -30,7 +30,8 @@ internal class SettingEditor<T> where T : ISettingUpdate
         _editors = new Editor[scrObjs.Length];
         _setting = new ScriptableObject[scrObjs.Length];
         _toggle = new bool[scrObjs.Length];
-
+        _toggle[0] = true;
+        
         for (int i = 0; i < scrObjs.Length; i++)
         {
             var scrObj = scrObjs[i];

@@ -16,7 +16,7 @@ namespace LSystem.Scripts
             {
                 UpdateRect(shapeSetting);
                 AddCell(ref generateMeshData);
-                UpdatePos(shapeSetting.size);
+                UpdatePos(shapeSetting);
             };
             Action<int> A = null;
             // 生成规则：A=[+FA][-FA] 

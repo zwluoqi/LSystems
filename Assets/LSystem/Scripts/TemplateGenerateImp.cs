@@ -61,7 +61,7 @@ namespace LSystem.Scripts
                     {
                         UpdateRect(shapeSetting);
                         AddCell(ref generateMeshData);
-                        UpdatePos(shapeSetting.size);
+                        UpdatePos(shapeSetting);
                     }
                     else
                     {
@@ -72,7 +72,7 @@ namespace LSystem.Scripts
                 {
                     UpdateRect(shapeSetting);
                     AddCell(ref generateMeshData);
-                    UpdatePos(shapeSetting.size);
+                    UpdatePos(shapeSetting);
                 }
             };
             totalDefine['F'] = F; 
@@ -123,19 +123,33 @@ namespace LSystem.Scripts
                             RotationB(shapeSetting);
                             stringBuilder.AppendLine("RotationB(shapeSetting)");
                             break;
+                        case '<':
+                            MultipleLength(shapeSetting);
+                            stringBuilder.AppendLine("MultipleLength(shapeSetting)");
+                            break;
+                        case '>':
+                            DivideLength(shapeSetting);
+                            stringBuilder.AppendLine("DivideLength(shapeSetting)");
+                            break;
                         default:
                             if (totalDefine.ContainsKey(key))
                             {
                                 totalDefine[key](iter + 1);
                                 stringBuilder.AppendLine(key + "(iter+1)");
                             }
+                            else
+                            {
+                                Debug.LogError("not support "+key);
+                            }
 
                             break;
                     }
                 }
-                // Debug.LogWarning(stringBuilder.ToString());
+                Debug.LogWarning(stringBuilder.ToString());
             };
             return tmp;
         }
+
+
     }
 }

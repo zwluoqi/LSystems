@@ -47,12 +47,14 @@ public class LsystemEnv
     public Vector3 up = Vector3.up;
     public  Vector3 right = Vector3.right;
     public  Vector3 pos = Vector3.zero;
+    public float lengthScale = 1.0f;
 
     public LsystemEnv(LsystemEnv curEvn)
     {
         up = curEvn.up;
         right = curEvn.right;
         pos = curEvn.pos;
+        lengthScale = curEvn.lengthScale;
     }
 
     public LsystemEnv()
@@ -91,20 +93,21 @@ public abstract class IGenerateImp
     private StringBuilder _stringBuilder = new StringBuilder();
     public abstract GenerateMeshData  Generate(ShapeSetting shapeSetting);
     
-    protected  void UpdatePos(Vector2 shapeSettingSize)
+    protected  void UpdatePos(ShapeSetting shapeSetting)
     {
-        curEvn.pos += curEvn.up * shapeSettingSize.y;
+        var length = shapeSetting.size.y * curEvn.lengthScale;
+        curEvn.pos += curEvn.up * length;
         _stringBuilder.AppendLine("UpdatePos:"+curEvn.ToString());
     }
 
     protected void UpdateRect(ShapeSetting shapeSetting)
     {
-
+        var length = shapeSetting.size.y * curEvn.lengthScale;
         var scale = Mathf.Lerp(1, 0.25f, _stack.Count*1.0f / shapeSetting.maxIter);
         rect[0] = curEvn.pos + curEvn.right*shapeSetting.size.x*(-0.5f)*scale+curEvn.up*0;
         rect[1] = curEvn.pos + curEvn.right*shapeSetting.size.x*0.5f*scale+curEvn.up*0;
-        rect[2] = curEvn.pos + curEvn.right*shapeSetting.size.x*0.5f*scale+curEvn.up*shapeSetting.size.y;
-        rect[3] = curEvn.pos + curEvn.right*shapeSetting.size.x*(-0.5f)*scale+curEvn.up*shapeSetting.size.y;
+        rect[2] = curEvn.pos + curEvn.right*shapeSetting.size.x*0.5f*scale+curEvn.up*length;
+        rect[3] = curEvn.pos + curEvn.right*shapeSetting.size.x*(-0.5f)*scale+curEvn.up*length;
         
         
         var forward = Vector3.Cross(curEvn.right, curEvn.up);
@@ -122,14 +125,6 @@ public abstract class IGenerateImp
     {
         int startIndex = generateMeshData.vector3s.Count;
 
-        // for (int i = 0; i < 4; i++)
-        // {
-        //     generateMeshData.vector3s.Add(rect[i]);
-        // }
-        // for (int i = 0; i < 4; i++)
-        // {
-        //     generateMeshData.vector3s.Add(forwardRect[i]);
-        // }
         for (int i = 0; i < 4; i++)
         {
             tmpRect[i] = rect[i];
@@ -176,20 +171,20 @@ public abstract class IGenerateImp
       
     protected void RotationF(ShapeSetting shapeSetting)
     {
-        Rotation(shapeSetting.rotationFrequency, shapeSetting.angle);
+        Rotation(shapeSetting.rotationStrength,shapeSetting.rotationFrequency, shapeSetting.angle);
     }
 
     
     protected  void RotationB(ShapeSetting shapeSetting)
     {
-        Rotation(shapeSetting.rotationFrequency, -shapeSetting.angle);
+        Rotation(shapeSetting.rotationStrength,shapeSetting.rotationFrequency, -shapeSetting.angle);
     }
     
-    void Rotation(float frequency,float angle)
+    void Rotation(float strength,float frequency,float angle)
     {
-        var noise = Unity.Mathematics.noise.snoise(frequency*curEvn.pos);
+        var noise = strength*Unity.Mathematics.noise.snoise(frequency*curEvn.pos);
         noise = (noise + 1) * 0.5f;
-        var dirAngle = Mathf.Lerp(-Mathf.PI, Mathf.PI, noise);
+        var dirAngle = Mathf.Lerp(0, 2*Mathf.PI, noise);
         Vector3 dir = new Vector3(Mathf.Cos(dirAngle), 0, Mathf.Sin(dirAngle));
         var rotation = Quaternion.AngleAxis(angle, dir);
         curEvn.up =  rotation * curEvn.up;
@@ -208,6 +203,16 @@ public abstract class IGenerateImp
     {
         curEvn = _stack.Pop();
         _stringBuilder.AppendLine("PopEvn:"+curEvn.ToString());
+    }
+    
+    protected void DivideLength(ShapeSetting shapeSetting)
+    {
+        curEvn.lengthScale /= shapeSetting.lengthFactor;
+    }
+
+    protected void MultipleLength(ShapeSetting shapeSetting)
+    {
+        curEvn.lengthScale *= shapeSetting.lengthFactor;
     }
 
     public void SaveFile(ShapeSetting shapeSetting)

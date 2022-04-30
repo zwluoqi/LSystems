@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
+  m_Name: treeleaf
+  m_EditorClassIdentifier: 
+  generateType: 2
+  rotationStrength: 0
+  rotationFrequency: 0
+  angle: 25
+  lengthFactor: 1.31
+  maxIter: 1
+  size: {x: 0.1, y: 1}
+  templateRule: F=F<,a=F[+x]Fb,b=F[-y]Fa,x=a,y=b
+  initRule: a

@@ -63,5 +63,11 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
         Debug.LogWarning(obj.name+" update");
         GenerateMesh();
     }
+
+    private void OnValidate()
+    {
+        Debug.LogWarning(this.name+" OnValidate");
+        GenerateMesh();
+    }
 }
 
