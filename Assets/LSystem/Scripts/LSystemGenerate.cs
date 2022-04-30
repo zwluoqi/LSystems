@@ -6,17 +6,22 @@ using System.Text;
 using LSystem.Scripts;
 using UnityEngine;
 
+public class GenerateMeshData
+{
+    public List<Vector3> vector3s = new List<Vector3>();
+    public List<int> triangents = new List<int>();
+}
+
 // https://www.bilibili.com/read/cv3006796
 public class LSystemGenerate
 {
-
     private IGenerateImp iGenerateImp; 
-    public List<Vector3> Generate(ShapeSetting shapeSetting)
+    public GenerateMeshData Generate(ShapeSetting shapeSetting)
     {
         iGenerateImp = CreateGenerate(shapeSetting.generateType);
-        var vector3s = iGenerateImp.Generate(shapeSetting);
+        var generateMeshData = iGenerateImp.Generate(shapeSetting);
         iGenerateImp.SaveFile(shapeSetting);
-        return vector3s;
+        return generateMeshData;
     }
 
     private IGenerateImp CreateGenerate(GenerateType shapeSettingGenerateType)
@@ -70,11 +75,19 @@ public abstract class IGenerateImp
         new Vector3(1, 1, 0),
         new Vector3(0, 1, 0),
     };
+    private Vector3[] forwardRect = new Vector3[]
+    {
+        new Vector3(0, 0, 1),
+        new Vector3(1, 0, 1),
+        new Vector3(1, 1, 1),
+        new Vector3(0, 1, 1),
+    };
+
 
     private LsystemEnv curEvn = new LsystemEnv();
     private Stack<LsystemEnv> _stack = new Stack<LsystemEnv>();
     private StringBuilder _stringBuilder = new StringBuilder();
-    public abstract List<Vector3>  Generate(ShapeSetting shapeSetting);
+    public abstract GenerateMeshData  Generate(ShapeSetting shapeSetting);
     
     protected  void UpdatePos(Vector2 shapeSettingSize)
     {
@@ -82,31 +95,73 @@ public abstract class IGenerateImp
         _stringBuilder.AppendLine("UpdatePos:"+curEvn.ToString());
     }
 
-    protected void UpdateRect(Vector2 shapeSettingSize)
+    protected void UpdateRect(ShapeSetting shapeSetting)
     {
-        rect[0] = curEvn.pos + curEvn.right*shapeSettingSize.x*(-0.5f)+curEvn.up*0;
-        rect[1] = curEvn.pos + curEvn.right*shapeSettingSize.x*0.5f+curEvn.up*0;
-        rect[2] = curEvn.pos + curEvn.right*shapeSettingSize.x*0.5f+curEvn.up*shapeSettingSize.y;
-        rect[3] = curEvn.pos + curEvn.right*shapeSettingSize.x*(-0.5f)+curEvn.up*shapeSettingSize.y;
+
+        var scale = Mathf.Lerp(1, 0.25f, _stack.Count*1.0f / shapeSetting.maxIter);
+        rect[0] = curEvn.pos + curEvn.right*shapeSetting.size.x*(-0.5f)*scale+curEvn.up*0;
+        rect[1] = curEvn.pos + curEvn.right*shapeSetting.size.x*0.5f*scale+curEvn.up*0;
+        rect[2] = curEvn.pos + curEvn.right*shapeSetting.size.x*0.5f*scale+curEvn.up*shapeSetting.size.y;
+        rect[3] = curEvn.pos + curEvn.right*shapeSetting.size.x*(-0.5f)*scale+curEvn.up*shapeSetting.size.y;
+        
+        
+        var forward = Vector3.Cross(curEvn.right, curEvn.up);
+        for (int i = 0; i < 4; i++)
+        {
+            forwardRect[i] = rect[i] + forward * shapeSetting.size.x * scale;
+        }
+        
+        
         _stringBuilder.AppendLine("UpdateRect:"+curEvn.ToString());
 
     }
 
-    protected  void AddCell(ref List<Vector3> vector3s)
+    protected  void AddCell(ref GenerateMeshData generateMeshData)
     {
-        vector3s.Add(rect[0]);
-        vector3s.Add(rect[3]);
-        vector3s.Add(rect[2]);
+        int startIndex = generateMeshData.vector3s.Count;
+
+        for (int i = 0; i < 4; i++)
+        {
+            generateMeshData.vector3s.Add(rect[i]);
+        }
+        for (int i = 0; i < 4; i++)
+        {
+            generateMeshData.vector3s.Add(forwardRect[i]);
+        }
         
-        vector3s.Add(rect[0]);
-        vector3s.Add(rect[2]);
-        vector3s.Add(rect[1]);
+        //0,1,2,3
+        AddCellFace(ref generateMeshData,startIndex, 0, 1, 2, 3);
+        //1,5,6,2
+        AddCellFace(ref generateMeshData,startIndex, 1,5,6,2);
+        //5,4,7,6
+        AddCellFace(ref generateMeshData,startIndex, 5,4,7,6);
+        //4,0,3,7
+        AddCellFace(ref generateMeshData,startIndex, 4,0,3,7);
+        //3,2,6,7
+        AddCellFace(ref generateMeshData,startIndex, 3,2,6,7);
+        //5,1,0,4
+        AddCellFace(ref generateMeshData,startIndex, 5,1,0,4);
+        
         _stringBuilder.AppendLine("AddCell:"+curEvn.ToString());
+    }
+
+    private void AddCellFace(ref GenerateMeshData generateMeshData,int startIndex,int i0, int i1, int i2, int i3)
+    {
+        generateMeshData.triangents.Add(startIndex+i0);
+        generateMeshData.triangents.Add(startIndex+i3);
+        generateMeshData.triangents.Add(startIndex+i2);
+        
+        generateMeshData.triangents.Add(startIndex+i0);
+        generateMeshData.triangents.Add(startIndex+i2);
+        generateMeshData.triangents.Add(startIndex+i1);
     }
 
     protected  void Rotation(float angle)
     {
-        var rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+        var noise = Unity.Mathematics.noise.snoise(curEvn.pos);
+        noise = (noise + 1) * 0.5f;
+        var dir = Vector3.Lerp(Vector3.forward, Vector3.right, noise);
+        var rotation = Quaternion.AngleAxis(angle, dir);
         curEvn.up =  rotation * curEvn.up;
         curEvn.right = rotation * curEvn.right;
         _stringBuilder.AppendLine("Rotation:"+curEvn.ToString());

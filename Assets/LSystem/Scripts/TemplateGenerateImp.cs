@@ -13,20 +13,20 @@ namespace LSystem.Scripts
         Dictionary<char,Action<int>> totalDefine = new Dictionary<char, Action<int>>();
 
         
-        public override List<Vector3> Generate(ShapeSetting shapeSetting)
+        public override GenerateMeshData Generate(ShapeSetting shapeSetting)
         {
             if (string.IsNullOrEmpty(shapeSetting.templateRule))
             {
                 Debug.LogError("shapeSetting.templateRule is nil");
-                return new List<Vector3>();
+                return null;
             }
             if (string.IsNullOrEmpty(shapeSetting.initRule))
             {
                 Debug.LogError("shapeSetting.initRule is nil");
-                return new List<Vector3>();
+                return null;
             }
             
-            List<Vector3> vector3s = new List<Vector3>();
+            GenerateMeshData generateMeshData = new GenerateMeshData();
 
             templateDefine.Clear();
             totalDefine.Clear();
@@ -59,8 +59,8 @@ namespace LSystem.Scripts
                 {
                     if (iter > shapeSetting.maxIter)
                     {
-                        UpdateRect(shapeSetting.size);
-                        AddCell(ref vector3s);
+                        UpdateRect(shapeSetting);
+                        AddCell(ref generateMeshData);
                         UpdatePos(shapeSetting.size);
                     }
                     else
@@ -70,8 +70,8 @@ namespace LSystem.Scripts
                 }
                 else
                 {
-                    UpdateRect(shapeSetting.size);
-                    AddCell(ref vector3s);
+                    UpdateRect(shapeSetting);
+                    AddCell(ref generateMeshData);
                     UpdatePos(shapeSetting.size);
                 }
             };
@@ -83,7 +83,7 @@ namespace LSystem.Scripts
             //calculate
             initRule(0);
             
-            return vector3s;
+            return generateMeshData;
         }
 
         // F：前进，且建立几何体

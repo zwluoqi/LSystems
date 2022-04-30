@@ -18,10 +18,10 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
         _InitMesh();
         
         meshFilter.sharedMesh.Clear();
-        var vertexs = _lSystemGenerate.Generate(shapeSetting);
+        var generateMeshData = _lSystemGenerate.Generate(shapeSetting);
         meshFilter.sharedMesh.indexFormat = IndexFormat.UInt32;
-        meshFilter.sharedMesh.vertices = vertexs.ToArray();
-        meshFilter.sharedMesh.triangles = vertexs.Select((vector3, i) => i).ToArray();
+        meshFilter.sharedMesh.vertices = generateMeshData.vector3s.ToArray();
+        meshFilter.sharedMesh.triangles = generateMeshData.triangents.ToArray();
         meshFilter.sharedMesh.RecalculateNormals();
         meshFilter.sharedMesh.RecalculateTangents();
         

@@ -7,15 +7,15 @@ namespace LSystem.Scripts
     public class DemoGenerateImp : IGenerateImp
     {
         
-        public override List<Vector3> Generate(ShapeSetting shapeSetting)
+        public override GenerateMeshData Generate(ShapeSetting shapeSetting)
         {
-            List<Vector3> vector3s = new List<Vector3>();
+            GenerateMeshData generateMeshData = new GenerateMeshData();
         
             //define
             Action<int> F = delegate(int iter)
             {
-                UpdateRect(shapeSetting.size);
-                AddCell(ref vector3s);
+                UpdateRect(shapeSetting);
+                AddCell(ref generateMeshData);
                 UpdatePos(shapeSetting.size);
             };
             Action<int> A = null;
@@ -46,7 +46,7 @@ namespace LSystem.Scripts
                 A(1);
             }
         
-            return vector3s;
+            return generateMeshData;
         }
     }
 }

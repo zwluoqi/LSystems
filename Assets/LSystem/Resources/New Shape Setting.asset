@@ -12,11 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
   m_Name: New Shape Setting
   m_EditorClassIdentifier: 
-  toggle: 1
-  frequency: 0
   generateType: 2
-  angle: 38.2
-  maxIter: 2
-  size: {x: 0.01, y: 0.1}
-  templateRule: X=F+[[XXXX]-X-F]-F[-FXXX+F+X]+X,F=FF
+  angle: 26.7
+  maxIter: 4
+  size: {x: 0.4, y: 1}
+  templateRule: X=F+[[X]-X]-F[-FX]+X,F=FF
   initRule: X
