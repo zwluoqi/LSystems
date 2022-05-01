@@ -8,8 +8,9 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: tree
-  m_Shader: {fileID: 4800000, guid: 0f4122b9a743b744abe2fb6a0a88868b, type: 3}
-  m_ShaderKeywords: BACKFACENORMALMODE_MIRROR _WINDQUALITY_BEST
+  m_Shader: {fileID: 4800000, guid: 99134b1f0c27d54469a840832a28fadf, type: 3}
+  m_ShaderKeywords: BACKFACENORMALMODE_MIRROR EFFECT_BUMP EFFECT_HUE_VARIATION GEOM_TYPE_BRANCH
+    _WINDQUALITY_NONE
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -24,7 +25,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 067975d2ccb81457cb5c9360503ca84f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -52,7 +53,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 51bc18e44ef0e4f0ba109714cd82da0c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -92,6 +93,8 @@ Material:
     - EFFECT_EXTRA_TEX: 1
     - _AlphaClip: 0
     - _AlphaClipThreshold: 0.1
+    - _BillboardKwToggle: 0
+    - _BillboardShadowFade: 0.5
     - _Blend: 0
     - _BumpScale: 1
     - _ClearCoatMask: 0
@@ -120,6 +123,7 @@ Material:
     - _SubsurfaceIndirect: 0.25
     - _SubsurfaceKwToggle: 0
     - _Surface: 0
+    - _TwoSided: 2
     - _WINDQUALITY: 4
     - _WindQuality: 0
     - _WorkflowMode: 1
