@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: tree
   m_EditorClassIdentifier: 
   generateType: 2
-  rotationStrength: 1
-  rotationFrequency: 2
-  angle: 25
+  rotationStrength: 0
+  rotationFrequency: 0
+  angle: 30.61
+  lengthFactor: 1
   maxIter: 4
   size: {x: 0.1, y: 1}
   templateRule: X=F+[[X]-X]-F[-FX]+X,F=FF

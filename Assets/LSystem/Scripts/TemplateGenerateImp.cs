@@ -124,12 +124,12 @@ namespace LSystem.Scripts
                             stringBuilder.AppendLine("RotationB(shapeSetting)");
                             break;
                         case '<':
-                            MultipleLength(shapeSetting);
-                            stringBuilder.AppendLine("MultipleLength(shapeSetting)");
-                            break;
-                        case '>':
                             DivideLength(shapeSetting);
                             stringBuilder.AppendLine("DivideLength(shapeSetting)");
+                            break;
+                        case '>':
+                            MultipleLength(shapeSetting);
+                            stringBuilder.AppendLine("MultipleLength(shapeSetting)");
                             break;
                         default:
                             if (totalDefine.ContainsKey(key))

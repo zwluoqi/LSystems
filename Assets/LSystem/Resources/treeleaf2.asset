@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
-  m_Name: funy1
+  m_Name: treeleaf2
   m_EditorClassIdentifier: 
   generateType: 2
   rotationStrength: 0
   rotationFrequency: 0
-  angle: 90
+  angle: 22.5
   lengthFactor: 1
-  maxIter: 2
+  maxIter: 3
   size: {x: 0.1, y: 1}
-  templateRule: F=FF+F-F+F+FF
-  initRule: F+F+F+F
+  templateRule: F=FF+[+F-F-F]-[-F+F+F]
+  initRule: F

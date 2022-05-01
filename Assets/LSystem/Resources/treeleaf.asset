@@ -15,9 +15,9 @@ MonoBehaviour:
   generateType: 2
   rotationStrength: 0
   rotationFrequency: 0
-  angle: 25
-  lengthFactor: 1.31
-  maxIter: 1
-  size: {x: 0.1, y: 1}
-  templateRule: F=F<,a=F[+x]Fb,b=F[-y]Fa,x=a,y=b
+  angle: 45
+  lengthFactor: 1.5
+  maxIter: 10
+  size: {x: 0.1, y: 6}
+  templateRule: a=F<[+a]Fb,b=F<[-b]Fa
   initRule: a

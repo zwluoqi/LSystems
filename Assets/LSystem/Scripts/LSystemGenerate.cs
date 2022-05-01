@@ -184,8 +184,8 @@ public abstract class IGenerateImp
     {
         var noise = strength*Unity.Mathematics.noise.snoise(frequency*curEvn.pos);
         noise = (noise + 1) * 0.5f;
-        var dirAngle = Mathf.Lerp(0, 2*Mathf.PI, noise);
-        Vector3 dir = new Vector3(Mathf.Cos(dirAngle), 0, Mathf.Sin(dirAngle));
+        var dirAngle = Mathf.Lerp(-Mathf.PI, Mathf.PI, noise);
+        Vector3 dir = new Vector3(Mathf.Sin(dirAngle), 0, Mathf.Cos(dirAngle));
         var rotation = Quaternion.AngleAxis(angle, dir);
         curEvn.up =  rotation * curEvn.up;
         curEvn.right = rotation * curEvn.right;
