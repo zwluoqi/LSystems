@@ -13,20 +13,19 @@ namespace LSystem.Scripts
         Dictionary<char,Action<int>> totalDefine = new Dictionary<char, Action<int>>();
 
         
-        public override GenerateMeshData Generate(ShapeSetting shapeSetting)
+        public override void Generate(ShapeSetting shapeSetting)
         {
             if (string.IsNullOrEmpty(shapeSetting.templateRule))
             {
                 Debug.LogError("shapeSetting.templateRule is nil");
-                return null;
+                return;
             }
             if (string.IsNullOrEmpty(shapeSetting.initRule))
             {
                 Debug.LogError("shapeSetting.initRule is nil");
-                return null;
+                return;
             }
             
-            GenerateMeshData generateMeshData = new GenerateMeshData();
 
             templateDefine.Clear();
             totalDefine.Clear();
@@ -52,15 +51,28 @@ namespace LSystem.Scripts
                 templateDefine[rules[i][0]] = AnalyticDefine(shapeSetting,define);
                 totalDefine[rules[i][0]] = templateDefine[rules[i][0]];
             }
-            Action<int> F = null;
-            F = delegate(int iter)
+
+            AddDefaultRule(shapeSetting);
+            
+            //init rule
+            var initRule = AnalyticDefine(shapeSetting,shapeSetting.initRule);
+            
+            //calculate
+            initRule(0);
+            
+            return;
+        }
+
+        private void AddDefaultRule(ShapeSetting shapeSetting)
+        {
+            void ActionF(int iter)
             {
                 if (templateDefine.TryGetValue('F', out var defineF))
                 {
                     if (iter > shapeSetting.maxIter)
                     {
                         UpdateRect(shapeSetting);
-                        AddCell(ref generateMeshData);
+                        AddCell();
                         UpdatePos(shapeSetting);
                     }
                     else
@@ -71,19 +83,20 @@ namespace LSystem.Scripts
                 else
                 {
                     UpdateRect(shapeSetting);
-                    AddCell(ref generateMeshData);
+                    AddCell();
                     UpdatePos(shapeSetting);
                 }
-            };
-            totalDefine['F'] = F; 
-            
-            //init rule
-            var initRule = AnalyticDefine(shapeSetting,shapeSetting.initRule);
-            
-            //calculate
-            initRule(0);
-            
-            return generateMeshData;
+            }
+
+            totalDefine['F'] = ActionF;
+
+            void Actionf(int iter)
+            {
+                UpdateRect(shapeSetting);
+                UpdatePos(shapeSetting);
+            }
+
+            totalDefine['f'] = Actionf; 
         }
 
         // F：前进，且建立几何体
@@ -116,12 +129,33 @@ namespace LSystem.Scripts
                             stringBuilder.AppendLine("PopEvn");
                             break;
                         case '+':
-                            RotationF(shapeSetting);
-                            stringBuilder.AppendLine("RotationF(shapeSetting)");
+                            Turn(shapeSetting.angle);
+                            stringBuilder.AppendLine("Turn(+)");
                             break;
                         case '-':
-                            RotationB(shapeSetting);
-                            stringBuilder.AppendLine("RotationB(shapeSetting)");
+                            Turn(-shapeSetting.angle);
+                            stringBuilder.AppendLine("Turn(-)");
+                            break;
+                        case '&':
+                            Pitch(shapeSetting.angle);
+                            stringBuilder.AppendLine("Pitch(+)");
+                            break;
+                        case '^':
+                        case '∧':
+                            Pitch(-shapeSetting.angle);
+                            stringBuilder.AppendLine("Pitch(-)");
+                            break;
+                        case '\\':
+                            Roll(shapeSetting.angle);
+                            stringBuilder.AppendLine("Roll(+)");
+                            break;
+                        case '/':
+                            Roll(-shapeSetting.angle);
+                            stringBuilder.AppendLine("Roll(-)");
+                            break;
+                        case '|':
+                            Turn(180);
+                            stringBuilder.AppendLine("Turn(180)");
                             break;
                         case '<':
                             DivideLength(shapeSetting);
@@ -130,6 +164,24 @@ namespace LSystem.Scripts
                         case '>':
                             MultipleLength(shapeSetting);
                             stringBuilder.AppendLine("MultipleLength(shapeSetting)");
+                            break;
+                        case '#':
+                            IncrementWidth(shapeSetting);
+                            stringBuilder.AppendLine("IncrementWidth(shapeSetting)");
+                            break;
+                        case '!':
+                            DecrementWidth(shapeSetting);
+                            stringBuilder.AppendLine("DecrementWidth(shapeSetting)");
+                            break;
+                        case '{':
+                            StartSaveSubsequentPos();
+                            break;
+                        case '}':
+                            FillSavedPolygon();
+                            break;
+                        case '\'':
+                        case '’':
+                            //TODO color
                             break;
                         default:
                             if (totalDefine.ContainsKey(key))
@@ -145,7 +197,7 @@ namespace LSystem.Scripts
                             break;
                     }
                 }
-                Debug.LogWarning(stringBuilder.ToString());
+                // Debug.LogWarning(stringBuilder.ToString());
             };
             return tmp;
         }

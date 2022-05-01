@@ -12,11 +12,12 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
 
 
     public MeshFilter meshFilter;
+    public MeshFilter[] subMeshFilter;
     private LSystemGenerate _lSystemGenerate = new LSystemGenerate();
     
     void GenerateMesh()
     {
-        _InitMesh();
+        FillMeshFilter(meshFilter,"main");
         
         meshFilter.sharedMesh.Clear();
         var generateMeshData = _lSystemGenerate.Generate(shapeSetting);
@@ -25,23 +26,67 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
         meshFilter.sharedMesh.triangles = generateMeshData.triangents.ToArray();
         meshFilter.sharedMesh.RecalculateNormals();
         meshFilter.sharedMesh.RecalculateTangents();
-        
-    }
 
-    private void _InitMesh()
-    {
-        if (meshFilter == null)
+        _InitSubMesh(generateMeshData.subMeshDatas.Count);
+        for (int i = 0; i < generateMeshData.subMeshDatas.Count; i++)
         {
-            meshFilter = (new GameObject("system")).AddComponent<MeshFilter>();
-            meshFilter.transform.SetParent(this.transform);
-            meshFilter.transform.localScale = Vector3.one;
-            meshFilter.transform.localPosition = Vector3.zero;
-            meshFilter.transform.localRotation = Quaternion.identity;
+            var sub = this.subMeshFilter[i];
+            sub.gameObject.SetActive(true);
+            sub.sharedMesh.vertices = generateMeshData.subMeshDatas[i].vector3s.ToArray();
+            sub.sharedMesh.triangles =
+                generateMeshData.subMeshDatas[i].vector3s.Select(((vector3, i1) => i1)).ToArray();
+            sub.sharedMesh.RecalculateNormals();
+            sub.sharedMesh.RecalculateTangents();
+        }
+        for (int i = generateMeshData.subMeshDatas.Count; i < subMeshFilter.Length; i++)
+        {
+            this.subMeshFilter[i].gameObject.SetActive(false);
         }
 
-        if (!meshFilter.TryGetComponent<MeshRenderer>(out var renderer))
+    }
+
+    private void _InitSubMesh(int count)
+    {
+        if (subMeshFilter == null)
         {
-            var render = meshFilter.gameObject.AddComponent<MeshRenderer>();
+            subMeshFilter = new MeshFilter[count];
+        }
+
+        if (subMeshFilter.Length < count)
+        {
+            var tmp =  new MeshFilter[count];
+            Array.Copy(subMeshFilter,tmp,subMeshFilter.Length);
+            subMeshFilter = tmp;
+        }
+        for (int i = 0; i < count; i++)
+        {
+            var sub = _InitSubMesh0(i);
+            this.subMeshFilter[i] = sub;
+        }
+    }
+
+    private MeshFilter _InitSubMesh0(int index)
+    {
+        var sub = this.subMeshFilter[index];
+        sub = FillMeshFilter(sub,"sub"+index);
+        return sub;
+    }
+
+    private MeshFilter FillMeshFilter(MeshFilter sub,string names)
+    {
+        if (sub == null)
+        {
+            sub = (new GameObject(names)).AddComponent<MeshFilter>();
+            Transform transform1;
+            (transform1 = sub.transform).SetParent(this.transform);
+            transform1.localScale = Vector3.one;
+            transform1.localPosition = Vector3.zero;
+            transform1.localRotation = Quaternion.identity;
+        }
+
+        if (!sub.TryGetComponent<MeshRenderer>(out var renderer))
+        {
+            var render = sub.gameObject.AddComponent<MeshRenderer>();
             render.sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
         }
         else
@@ -52,10 +97,12 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
             }
         }
 
-        if (meshFilter.sharedMesh == null)
+        if (sub.sharedMesh == null)
         {
-            meshFilter.sharedMesh = new Mesh {hideFlags = HideFlags.DontSave};
+            sub.sharedMesh = new Mesh {hideFlags = HideFlags.DontSave};
         }
+
+        return sub;
     }
 
     public void UpdateSetting(ScriptableObject obj)

@@ -6,10 +6,8 @@ namespace LSystem.Scripts
 {
     public class FactalPlantGenerateImp : IGenerateImp
     {
-        public override GenerateMeshData Generate(ShapeSetting shapeSetting)
+        public override void Generate(ShapeSetting shapeSetting)
         {
-            GenerateMeshData generateMeshData = new GenerateMeshData();
-        
             // 生成规则：1. X→F+[[X]-X]-F[-FX]+X; 2.F→FF
             //define
             Action<int> F = null;
@@ -18,7 +16,7 @@ namespace LSystem.Scripts
                 if (iter > shapeSetting.maxIter)
                 {
                     UpdateRect(shapeSetting);
-                    AddCell(ref generateMeshData);
+                    AddCell();
                     UpdatePos(shapeSetting);
                 }
                 else
@@ -61,7 +59,7 @@ namespace LSystem.Scripts
                 A(1);
             }
         
-            return generateMeshData;
+            return;
         }
     }
 }

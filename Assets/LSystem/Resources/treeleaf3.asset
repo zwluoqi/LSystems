@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
-  m_Name: treeleaf
+  m_Name: treeleaf3
   m_EditorClassIdentifier: 
   generateType: 2
-  rotationStrength: 1
-  rotationFrequency: 1
-  angle: 45
-  lengthFactor: 1.5
-  maxIter: 8
-  size: {x: 0.1, y: 6}
-  templateRule: a=F<[+a]Fb,b=F<[-b]Fa
-  initRule: a
+  rotationStrength: 0
+  rotationFrequency: 0
+  angle: 22.5
+  lengthFactor: 1
+  maxIter: 3
+  size: {x: 0.1, y: 1}
+  templateRule: F=FF+[+F-F-F]-[-F+F+F]
+  initRule: F

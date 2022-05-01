@@ -10,6 +10,19 @@ public class GenerateMeshData
 {
     public List<Vector3> vector3s = new List<Vector3>();
     public List<int> triangents = new List<int>();
+    
+    public List<SubMeshData> subMeshDatas = new List<SubMeshData>();
+}
+
+public class SubMeshData:ICloneable
+{
+    public List<Vector3> vector3s = new List<Vector3>();
+    public object Clone()
+    {
+        SubMeshData newSub = new SubMeshData();
+        newSub.vector3s.AddRange(vector3s);
+        return newSub;
+    }
 }
 
 // https://www.bilibili.com/read/cv3006796
@@ -19,9 +32,9 @@ public class LSystemGenerate
     public GenerateMeshData Generate(ShapeSetting shapeSetting)
     {
         iGenerateImp = CreateGenerate(shapeSetting.generateType);
-        var generateMeshData = iGenerateImp.Generate(shapeSetting);
+        iGenerateImp.Generate(shapeSetting);
         iGenerateImp.SaveFile(shapeSetting);
-        return generateMeshData;
+        return iGenerateImp.generateMeshData;
     }
 
     private IGenerateImp CreateGenerate(GenerateType shapeSettingGenerateType)
@@ -48,6 +61,9 @@ public class LsystemEnv
     public  Vector3 right = Vector3.right;
     public  Vector3 pos = Vector3.zero;
     public float lengthScale = 1.0f;
+    public float widthIncrement = 0;
+    public bool startSavePos = false;
+    public SubMeshData subMeshData;
 
     public LsystemEnv(LsystemEnv curEvn)
     {
@@ -55,6 +71,12 @@ public class LsystemEnv
         right = curEvn.right;
         pos = curEvn.pos;
         lengthScale = curEvn.lengthScale;
+        widthIncrement = curEvn.widthIncrement;
+        startSavePos = curEvn.startSavePos;
+        if (curEvn.subMeshData != null)
+        {
+            subMeshData = (SubMeshData)curEvn.subMeshData.Clone();
+        }
     }
 
     public LsystemEnv()
@@ -91,12 +113,17 @@ public abstract class IGenerateImp
     private LsystemEnv curEvn = new LsystemEnv();
     private Stack<LsystemEnv> _stack = new Stack<LsystemEnv>();
     private StringBuilder _stringBuilder = new StringBuilder();
-    public abstract GenerateMeshData  Generate(ShapeSetting shapeSetting);
-    
+    public abstract void  Generate(ShapeSetting shapeSetting);
+    public GenerateMeshData generateMeshData = new GenerateMeshData();
+
     protected  void UpdatePos(ShapeSetting shapeSetting)
     {
         var length = shapeSetting.size.y * curEvn.lengthScale;
         curEvn.pos += curEvn.up * length;
+        if (curEvn.startSavePos)
+        {
+            curEvn.subMeshData.vector3s.Add(curEvn.pos);
+        }
         _stringBuilder.AppendLine("UpdatePos:"+curEvn.ToString());
     }
 
@@ -104,10 +131,10 @@ public abstract class IGenerateImp
     {
         var length = shapeSetting.size.y * curEvn.lengthScale;
         var scale = Mathf.Lerp(1, 0.25f, _stack.Count*1.0f / shapeSetting.maxIter);
-        rect[0] = curEvn.pos + curEvn.right*shapeSetting.size.x*(-0.5f)*scale+curEvn.up*0;
-        rect[1] = curEvn.pos + curEvn.right*shapeSetting.size.x*0.5f*scale+curEvn.up*0;
-        rect[2] = curEvn.pos + curEvn.right*shapeSetting.size.x*0.5f*scale+curEvn.up*length;
-        rect[3] = curEvn.pos + curEvn.right*shapeSetting.size.x*(-0.5f)*scale+curEvn.up*length;
+        rect[0] = curEvn.pos + curEvn.right*(shapeSetting.size.x+curEvn.widthIncrement)*(-0.5f)*scale+curEvn.up*0;
+        rect[1] = curEvn.pos + curEvn.right*(shapeSetting.size.x+curEvn.widthIncrement)*0.5f*scale+curEvn.up*0;
+        rect[2] = curEvn.pos + curEvn.right*(shapeSetting.size.x+curEvn.widthIncrement)*0.5f*scale+curEvn.up*length;
+        rect[3] = curEvn.pos + curEvn.right*(shapeSetting.size.x+curEvn.widthIncrement)*(-0.5f)*scale+curEvn.up*length;
         
         
         var forward = Vector3.Cross(curEvn.right, curEvn.up);
@@ -121,7 +148,7 @@ public abstract class IGenerateImp
 
     }
 
-    protected  void AddCell(ref GenerateMeshData generateMeshData)
+    protected  void AddCell()
     {
         int startIndex = generateMeshData.vector3s.Count;
 
@@ -135,22 +162,22 @@ public abstract class IGenerateImp
         }
         
         //0,1,2,3
-        AddCellFace(ref generateMeshData,startIndex, 0, 1, 2, 3);
+        AddCellFace(startIndex, 0, 1, 2, 3);
         //1,5,6,2
-        AddCellFace(ref generateMeshData,startIndex, 1,5,6,2);
+        AddCellFace(startIndex, 1,5,6,2);
         //5,4,7,6
-        AddCellFace(ref generateMeshData,startIndex, 5,4,7,6);
+        AddCellFace(startIndex, 5,4,7,6);
         //4,0,3,7
-        AddCellFace(ref generateMeshData,startIndex, 4,0,3,7);
+        AddCellFace(startIndex, 4,0,3,7);
         //3,2,6,7
-        AddCellFace(ref generateMeshData,startIndex, 3,2,6,7);
+        AddCellFace(startIndex, 3,2,6,7);
         //5,1,0,4
-        AddCellFace(ref generateMeshData,startIndex, 5,1,0,4);
+        AddCellFace(startIndex, 5,1,0,4);
         
         _stringBuilder.AppendLine("AddCell:"+curEvn.ToString());
     }
 
-    private void AddCellFace(ref GenerateMeshData generateMeshData,int startIndex,int i0, int i1, int i2, int i3)
+    private void AddCellFace(int startIndex,int i0, int i1, int i2, int i3)
     {
         startIndex = generateMeshData.vector3s.Count; 
         generateMeshData.vector3s.Add(tmpRect[i0]);
@@ -169,6 +196,15 @@ public abstract class IGenerateImp
 
     
       
+    
+    // + Turn left by angle δ, using rotation matrix RU(δ).
+    // − Turn right by angle δ, using rotation matrix RU(−δ).
+    // & Pitch down by angle δ, using rotation matrix RL(δ).
+    // ∧ Pitch up by angle δ, using rotation matrix RL(−δ).
+    // \ Roll left by angle δ, using rotation matrix RH(δ).
+    // / Roll right by angle δ, using rotation matrix RH(−δ).
+    // | Turn around, using rotation matrix RU (180◦ ).
+    
     protected void RotationF(ShapeSetting shapeSetting)
     {
         Rotation(shapeSetting.rotationStrength,shapeSetting.rotationFrequency, shapeSetting.angle);
@@ -180,6 +216,7 @@ public abstract class IGenerateImp
         Rotation(shapeSetting.rotationStrength,shapeSetting.rotationFrequency, -shapeSetting.angle);
     }
     
+        
     void Rotation(float strength,float frequency,float angle)
     {
         var noise = strength*Unity.Mathematics.noise.snoise(frequency*curEvn.pos);
@@ -190,6 +227,28 @@ public abstract class IGenerateImp
         curEvn.up =  rotation * curEvn.up;
         curEvn.right = rotation * curEvn.right;
         _stringBuilder.AppendLine("Rotation:"+curEvn.ToString());
+    }
+
+    protected void Turn(float angle)
+    {
+        var rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+        curEvn.up =  rotation * curEvn.up;
+        curEvn.right = rotation * curEvn.right;
+        _stringBuilder.AppendLine("Turn:"+curEvn.ToString());
+    }
+    protected void Pitch(float angle)
+    {
+        var rotation = Quaternion.AngleAxis(angle, Vector3.right);
+        curEvn.up =  rotation * curEvn.up;
+        curEvn.right = rotation * curEvn.right;
+        _stringBuilder.AppendLine("Pitch:"+curEvn.ToString());
+    }
+    protected void Roll(float angle)
+    {
+        var rotation = Quaternion.AngleAxis(angle, Vector3.up);
+        curEvn.up =  rotation * curEvn.up;
+        curEvn.right = rotation * curEvn.right;
+        _stringBuilder.AppendLine("Roll:"+curEvn.ToString());
     }
 
     protected void PushEnv()
@@ -213,6 +272,29 @@ public abstract class IGenerateImp
     protected void MultipleLength(ShapeSetting shapeSetting)
     {
         curEvn.lengthScale *= shapeSetting.lengthFactor;
+    }
+    
+    protected void IncrementWidth(ShapeSetting shapeSetting)
+    {
+        curEvn.widthIncrement += shapeSetting.size.x*shapeSetting.widthIncrementFactor;
+    }
+
+    protected void DecrementWidth(ShapeSetting shapeSetting)
+    {
+        curEvn.widthIncrement -= shapeSetting.size.x*shapeSetting.widthIncrementFactor;
+    }
+
+    protected void StartSaveSubsequentPos()
+    {
+        curEvn.startSavePos = true;
+        curEvn.subMeshData = new SubMeshData();
+    }
+
+    protected void FillSavedPolygon()
+    {
+        curEvn.startSavePos = false;
+        generateMeshData.subMeshDatas.Add(curEvn.subMeshData);
+        curEvn.subMeshData = null;
     }
 
     public void SaveFile(ShapeSetting shapeSetting)

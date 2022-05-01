@@ -12,6 +12,8 @@ public class ShapeSetting : ScriptableObject
     public float angle = 25;
     [Range(0.01f,10)]
     public float lengthFactor = 1;
+    [Range(0,1)]
+    public float widthIncrementFactor=0;
     [Range(1,10)]
     public int maxIter = 1;
     public Vector2 size = new Vector2(0.1f,1);
