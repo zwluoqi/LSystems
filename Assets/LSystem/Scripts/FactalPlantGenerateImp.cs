@@ -15,8 +15,7 @@ namespace LSystem.Scripts
             {
                 if (iter > shapeSetting.maxIter)
                 {
-                    UpdateRect(shapeSetting);
-                    AddCell();
+                    AddCell(shapeSetting);
                     UpdatePos(shapeSetting);
                 }
                 else

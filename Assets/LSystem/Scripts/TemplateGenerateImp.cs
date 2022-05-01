@@ -71,8 +71,7 @@ namespace LSystem.Scripts
                 {
                     if (iter > shapeSetting.maxIter)
                     {
-                        UpdateRect(shapeSetting);
-                        AddCell();
+                        AddCell(shapeSetting);
                         UpdatePos(shapeSetting);
                     }
                     else
@@ -82,8 +81,7 @@ namespace LSystem.Scripts
                 }
                 else
                 {
-                    UpdateRect(shapeSetting);
-                    AddCell();
+                    AddCell(shapeSetting);
                     UpdatePos(shapeSetting);
                 }
             }
@@ -92,7 +90,6 @@ namespace LSystem.Scripts
 
             void Actionf(int iter)
             {
-                UpdateRect(shapeSetting);
                 UpdatePos(shapeSetting);
             }
 
@@ -154,8 +151,8 @@ namespace LSystem.Scripts
                             stringBuilder.AppendLine("Roll(-)");
                             break;
                         case '|':
-                            Turn(180);
-                            stringBuilder.AppendLine("Turn(180)");
+                            TurnBack();
+                            stringBuilder.AppendLine("TurnBack()");
                             break;
                         case '<':
                             DivideLength(shapeSetting);

@@ -14,8 +14,7 @@ namespace LSystem.Scripts
             //define
             Action<int> F = delegate(int iter)
             {
-                UpdateRect(shapeSetting);
-                AddCell();
+                AddCell(shapeSetting);
                 UpdatePos(shapeSetting);
             };
             Action<int> A = null;

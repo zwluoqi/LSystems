@@ -65,8 +65,11 @@ public class LsystemEnv
     public bool startSavePos = false;
     public SubMeshData subMeshData;
 
+    public int id = 0;
+    private static int idGenerater = 0;
     public LsystemEnv(LsystemEnv curEvn)
     {
+        this.id = idGenerater++;
         up = curEvn.up;
         right = curEvn.right;
         pos = curEvn.pos;
@@ -81,7 +84,7 @@ public class LsystemEnv
 
     public LsystemEnv()
     {
-        
+        this.id = idGenerater++;
     }
 
     public override string ToString()
@@ -118,16 +121,23 @@ public abstract class IGenerateImp
 
     protected  void UpdatePos(ShapeSetting shapeSetting)
     {
-        var length = shapeSetting.size.y * curEvn.lengthScale;
-        curEvn.pos += curEvn.up * length;
         if (curEvn.startSavePos)
         {
             curEvn.subMeshData.vector3s.Add(curEvn.pos);
         }
-        _stringBuilder.AppendLine("UpdatePos:"+curEvn.ToString());
+        var length = shapeSetting.size.y * curEvn.lengthScale;
+        curEvn.pos += curEvn.up * length;
+        if (curEvn.startSavePos)
+        {
+            _stringBuilder.AppendLine("AddPos:" + curEvn.ToString());
+        }
+        else
+        {
+            _stringBuilder.AppendLine("UpdatePos:" + curEvn.ToString());
+        }
     }
 
-    protected void UpdateRect(ShapeSetting shapeSetting)
+    void UpdateRect(ShapeSetting shapeSetting)
     {
         var length = shapeSetting.size.y * curEvn.lengthScale;
         var scale = Mathf.Lerp(1, 0.25f, _stack.Count*1.0f / shapeSetting.maxIter);
@@ -142,14 +152,12 @@ public abstract class IGenerateImp
         {
             forwardRect[i] = rect[i] + forward * shapeSetting.size.x * scale;
         }
-        
-        
-        _stringBuilder.AppendLine("UpdateRect:"+curEvn.ToString());
-
     }
 
-    protected  void AddCell()
+    protected  void AddCell(ShapeSetting shapeSetting)
     {
+        UpdateRect(shapeSetting);
+
         int startIndex = generateMeshData.vector3s.Count;
 
         for (int i = 0; i < 4; i++)
@@ -224,31 +232,41 @@ public abstract class IGenerateImp
         var dirAngle = Mathf.Lerp(-Mathf.PI, Mathf.PI, noise);
         Vector3 dir = new Vector3(Mathf.Sin(dirAngle), 0, Mathf.Cos(dirAngle));
         var rotation = Quaternion.AngleAxis(angle, dir);
-        curEvn.up =  rotation * curEvn.up;
-        curEvn.right = rotation * curEvn.right;
+        curEvn.up =  (rotation * curEvn.up).normalized;
+        curEvn.right = (rotation * curEvn.right).normalized;
         _stringBuilder.AppendLine("Rotation:"+curEvn.ToString());
     }
 
+    protected void TurnBack()
+    {
+        var forward = Vector3.Cross(curEvn.right, curEvn.up);
+        var rotation = Quaternion.AngleAxis(180,forward);
+        curEvn.up =  (rotation * curEvn.up).normalized;
+        curEvn.right = (rotation * curEvn.right).normalized;
+        _stringBuilder.AppendLine("TurnBack:"+curEvn.ToString());
+    }
+    
     protected void Turn(float angle)
     {
-        var rotation = Quaternion.AngleAxis(angle, Vector3.forward);
-        curEvn.up =  rotation * curEvn.up;
-        curEvn.right = rotation * curEvn.right;
-        _stringBuilder.AppendLine("Turn:"+curEvn.ToString());
+        var forward = Vector3.Cross(curEvn.right, curEvn.up);
+        var rotation = Quaternion.AngleAxis(angle, forward);
+        curEvn.up =  (rotation * curEvn.up).normalized;
+        curEvn.right = (rotation * curEvn.right).normalized;
+        _stringBuilder.AppendLine($"Turn({angle}):"+curEvn.ToString());
     }
     protected void Pitch(float angle)
     {
-        var rotation = Quaternion.AngleAxis(angle, Vector3.right);
-        curEvn.up =  rotation * curEvn.up;
-        curEvn.right = rotation * curEvn.right;
-        _stringBuilder.AppendLine("Pitch:"+curEvn.ToString());
+        var rotation = Quaternion.AngleAxis(angle, curEvn.right);
+        curEvn.up =  (rotation * curEvn.up).normalized;
+        curEvn.right = (rotation * curEvn.right).normalized;
+        _stringBuilder.AppendLine($"Pitch({angle}):"+curEvn.ToString());
     }
     protected void Roll(float angle)
     {
-        var rotation = Quaternion.AngleAxis(angle, Vector3.up);
+        var rotation = Quaternion.AngleAxis(angle, curEvn.up);
         curEvn.up =  rotation * curEvn.up;
         curEvn.right = rotation * curEvn.right;
-        _stringBuilder.AppendLine("Roll:"+curEvn.ToString());
+        _stringBuilder.AppendLine($"Roll({angle}):"+curEvn.ToString());
     }
 
     protected void PushEnv()
@@ -288,6 +306,7 @@ public abstract class IGenerateImp
     {
         curEvn.startSavePos = true;
         curEvn.subMeshData = new SubMeshData();
+        _stringBuilder.AppendLine("StartSaveSubsequentPos:"+curEvn.ToString());
     }
 
     protected void FillSavedPolygon()
@@ -295,10 +314,11 @@ public abstract class IGenerateImp
         curEvn.startSavePos = false;
         generateMeshData.subMeshDatas.Add(curEvn.subMeshData);
         curEvn.subMeshData = null;
+        _stringBuilder.AppendLine("FillSavedPolygon:"+curEvn.ToString());
     }
 
     public void SaveFile(ShapeSetting shapeSetting)
     {
-        File.WriteAllText(shapeSetting.generateType.ToString()+"_"+shapeSetting.maxIter.ToString()+".txt",_stringBuilder.ToString());
+        File.WriteAllText(shapeSetting.name+"_"+shapeSetting.generateType.ToString()+"_"+shapeSetting.maxIter.ToString()+".txt",_stringBuilder.ToString());
     }
 }

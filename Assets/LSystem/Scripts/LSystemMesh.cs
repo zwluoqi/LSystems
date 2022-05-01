@@ -9,15 +9,15 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
 {
 
     public ShapeSetting shapeSetting;
-
+    public ColorSetting colorSetting;
 
     public MeshFilter meshFilter;
     public MeshFilter[] subMeshFilter;
     private LSystemGenerate _lSystemGenerate = new LSystemGenerate();
-    
+    private Material LitMaterial;
     void GenerateMesh()
     {
-        FillMeshFilter(meshFilter,"main");
+        meshFilter = FillMeshFilter(meshFilter,"main",true);
         
         meshFilter.sharedMesh.Clear();
         var generateMeshData = _lSystemGenerate.Generate(shapeSetting);
@@ -32,11 +32,15 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
         {
             var sub = this.subMeshFilter[i];
             sub.gameObject.SetActive(true);
-            sub.sharedMesh.vertices = generateMeshData.subMeshDatas[i].vector3s.ToArray();
-            sub.sharedMesh.triangles =
-                generateMeshData.subMeshDatas[i].vector3s.Select(((vector3, i1) => i1)).ToArray();
-            sub.sharedMesh.RecalculateNormals();
-            sub.sharedMesh.RecalculateTangents();
+
+            Mesh sharedMesh;
+            
+            int[] triangles = GetTriangles(generateMeshData.subMeshDatas[i].vector3s,out var uvs);
+            (sharedMesh = sub.sharedMesh).vertices = generateMeshData.subMeshDatas[i].vector3s.ToArray();
+            sharedMesh.triangles = triangles;
+            sharedMesh.uv = uvs;
+            sharedMesh.RecalculateNormals();
+            sharedMesh.RecalculateTangents();
         }
         for (int i = generateMeshData.subMeshDatas.Count; i < subMeshFilter.Length; i++)
         {
@@ -68,11 +72,11 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
     private MeshFilter _InitSubMesh0(int index)
     {
         var sub = this.subMeshFilter[index];
-        sub = FillMeshFilter(sub,"sub"+index);
+        sub = FillMeshFilter(sub,"sub"+index,false);
         return sub;
     }
 
-    private MeshFilter FillMeshFilter(MeshFilter sub,string names)
+    private MeshFilter FillMeshFilter(MeshFilter sub,string names,bool treenode)
     {
         if (sub == null)
         {
@@ -84,16 +88,39 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
             transform1.localRotation = Quaternion.identity;
         }
 
+        if (LitMaterial == null)
+        {
+            LitMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        }
         if (!sub.TryGetComponent<MeshRenderer>(out var renderer))
         {
             var render = sub.gameObject.AddComponent<MeshRenderer>();
-            render.sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            render.sharedMaterial = LitMaterial;
         }
         else
         {
             if (renderer.sharedMaterial == null)
             {
-                renderer.sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                renderer.sharedMaterial = LitMaterial;
+            }
+        }
+        
+        
+        if (colorSetting != null)
+        {
+            if (treenode)
+            {
+                if (renderer.sharedMaterial.name != colorSetting.material.name)
+                {
+                    renderer.sharedMaterial = colorSetting.material;
+                }
+            }
+            else
+            {
+                if (renderer.sharedMaterial.name != colorSetting.leafMaterial.name)
+                {
+                    renderer.sharedMaterial = colorSetting.leafMaterial;
+                }
             }
         }
 
@@ -115,6 +142,47 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
     {
         Debug.LogWarning(this.name+" OnValidate");
         GenerateMesh();
+    }
+    
+    
+    public static int[] GetTriangles(List<Vector3> vector3s,out Vector2[] uvs)
+    {
+        if (vector3s.Count == 6)
+        {
+            int[] triangles = new int[4*3];
+            uvs = new Vector2[vector3s.Count];
+            int i = 0;
+            triangles[i++] = 0;
+            triangles[i++] = 1;
+            triangles[i++] = 5;
+                
+            triangles[i++] = 5;
+            triangles[i++] = 1;
+            triangles[i++] = 2;
+                
+            triangles[i++] = 2;
+            triangles[i++] = 4;
+            triangles[i++] = 5;
+                
+            triangles[i++] = 4;
+            triangles[i++] = 2;
+            triangles[i++] = 3;
+                
+            uvs[0] = new Vector2(0,0.5f);
+            uvs[1] = new Vector2(1.0f/3.0f,0.0f);
+            uvs[2] = new Vector2(2.0f/3.0f,0.0f);
+            uvs[3] = new Vector2(1,0.5f);
+            uvs[4] = new Vector2(2.0f/3.0f,1.0f);
+            uvs[5] = new Vector2(1.0f/3.0f,1.0f);
+                
+            return triangles;
+        }
+        else
+        {
+            uvs = null;
+            return vector3s.Select(((vector3, i) => i)).ToArray();
+                
+        }
     }
 }
 
