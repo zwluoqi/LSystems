@@ -10,18 +10,30 @@ public class GenerateMeshData
 {
     public List<Vector3> vector3s = new List<Vector3>();
     public List<int> triangents = new List<int>();
+    public List<Vector2> uvs = new List<Vector2>();
     
     public List<SubMeshData> subMeshDatas = new List<SubMeshData>();
 }
 
 public class SubMeshData:ICloneable
 {
+    public Vector3 centerPos;
     public List<Vector3> vector3s = new List<Vector3>();
     public object Clone()
     {
         SubMeshData newSub = new SubMeshData();
         newSub.vector3s.AddRange(vector3s);
+        newSub.centerPos = this.centerPos;
         return newSub;
+    }
+
+    public void Normalize()
+    {
+        this.centerPos = vector3s[0];
+        for (int i = vector3s.Count-1; i >= 0; i--)
+        {
+            vector3s[i] -= vector3s[0];
+        }
     }
 }
 
@@ -139,18 +151,21 @@ public abstract class IGenerateImp
 
     void UpdateRect(ShapeSetting shapeSetting)
     {
-        var length = shapeSetting.size.y * curEvn.lengthScale;
-        var scale = Mathf.Lerp(1, 0.25f, _stack.Count*1.0f / shapeSetting.maxIter);
-        rect[0] = curEvn.pos + curEvn.right*(shapeSetting.size.x+curEvn.widthIncrement)*(-0.5f)*scale+curEvn.up*0;
-        rect[1] = curEvn.pos + curEvn.right*(shapeSetting.size.x+curEvn.widthIncrement)*0.5f*scale+curEvn.up*0;
-        rect[2] = curEvn.pos + curEvn.right*(shapeSetting.size.x+curEvn.widthIncrement)*0.5f*scale+curEvn.up*length;
-        rect[3] = curEvn.pos + curEvn.right*(shapeSetting.size.x+curEvn.widthIncrement)*(-0.5f)*scale+curEvn.up*length;
-        
-        
         var forward = Vector3.Cross(curEvn.right, curEvn.up);
+
+        var length = shapeSetting.size.y * curEvn.lengthScale;
+        
+        var scale = Mathf.Lerp(1, 0.25f, _stack.Count*1.0f / shapeSetting.maxIter);
+        var width = (shapeSetting.size.x + curEvn.widthIncrement)*scale;
+        rect[0] = curEvn.pos + curEvn.right*width*(-0.5f)+curEvn.up*0-forward * width*0.5f;
+        rect[1] = curEvn.pos + curEvn.right*width*0.5f+curEvn.up*0-forward * width*0.5f;
+        rect[2] = curEvn.pos + curEvn.right*width*0.5f+curEvn.up*length-forward * width*0.5f;
+        rect[3] = curEvn.pos + curEvn.right*width*(-0.5f)+curEvn.up*length-forward * width*0.5f;
+        
+        
         for (int i = 0; i < 4; i++)
         {
-            forwardRect[i] = rect[i] + forward * shapeSetting.size.x * scale;
+            forwardRect[i] = rect[i] + forward * width;
         }
     }
 
@@ -192,6 +207,12 @@ public abstract class IGenerateImp
         generateMeshData.vector3s.Add(tmpRect[i1]);
         generateMeshData.vector3s.Add(tmpRect[i2]);
         generateMeshData.vector3s.Add(tmpRect[i3]);
+        
+        generateMeshData.uvs.Add(new Vector2(0,0));
+        generateMeshData.uvs.Add(new Vector2(1,0));
+        generateMeshData.uvs.Add(new Vector2(0,1));
+        generateMeshData.uvs.Add(new Vector2(1,1));
+        
         
         generateMeshData.triangents.Add(startIndex+0);
         generateMeshData.triangents.Add(startIndex+3);

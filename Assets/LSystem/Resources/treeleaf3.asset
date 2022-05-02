@@ -18,7 +18,7 @@ MonoBehaviour:
   angle: 22.5
   lengthFactor: 0.5
   widthIncrementFactor: 0
-  maxIter: 7
-  size: {x: 0.1, y: 1}
+  maxIter: 5
+  size: {x: 0.4, y: 1}
   templateRule: "L=[\u2019\u2019\u2019\u2227\u2227{-f+f+f-|-f+f+f}],S=FL,F=S/////F,A=[&FL!A]/////\u2019[&FL!A]///////\u2019[&FL!A]"
   initRule: A

@@ -24,6 +24,7 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
         meshFilter.sharedMesh.indexFormat = IndexFormat.UInt32;
         meshFilter.sharedMesh.vertices = generateMeshData.vector3s.ToArray();
         meshFilter.sharedMesh.triangles = generateMeshData.triangents.ToArray();
+        meshFilter.sharedMesh.uv = generateMeshData.uvs.ToArray();
         meshFilter.sharedMesh.RecalculateNormals();
         meshFilter.sharedMesh.RecalculateTangents();
 
@@ -34,9 +35,12 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
             sub.gameObject.SetActive(true);
 
             Mesh sharedMesh;
-            
+            generateMeshData.subMeshDatas[i].Normalize();
+            sub.transform.localPosition = generateMeshData.subMeshDatas[i].centerPos;
             int[] triangles = GetTriangles(generateMeshData.subMeshDatas[i].vector3s,out var uvs);
-            (sharedMesh = sub.sharedMesh).vertices = generateMeshData.subMeshDatas[i].vector3s.ToArray();
+            sharedMesh =  sub.sharedMesh;
+            sharedMesh.Clear();
+            sharedMesh.vertices = generateMeshData.subMeshDatas[i].vector3s.ToArray();
             sharedMesh.triangles = triangles;
             sharedMesh.uv = uvs;
             sharedMesh.RecalculateNormals();
