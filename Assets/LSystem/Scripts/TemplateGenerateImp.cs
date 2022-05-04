@@ -142,6 +142,7 @@ namespace LSystem.Scripts
                 }
                 var defineKey = rule.Substring(0, splitIndex);
                 var defineAction = rule.Substring( splitIndex + size);
+                defineAction = defineAction.Replace( " ", "");
                 
                 string[] parametricNames = new string[4];
                 string parameName = "";
@@ -199,16 +200,15 @@ namespace LSystem.Scripts
         {
             void ActionF(int iter,ParamStackEnv paramStackEnv)
             {
+                float paramValue = 0.0f;
+                if (paramStackEnv.FirstValue != null)
+                {
+                    paramValue = (float)paramStackEnv.FirstValue.Value;
+                }
                 if (templateDefine.TryGetValue('F', out var defineF))
                 {
                     if (iter > shapeSetting.maxIter)
                     {
-                        float paramValue = 0.0f;
-                        if (paramStackEnv.FirstValue != null)
-                        {
-                            paramValue = (float)paramStackEnv.FirstValue.Value;
-                        }
-                        
                         AddCell(shapeSetting,paramValue);
                         UpdatePos(shapeSetting,paramValue);
                     }
@@ -219,8 +219,8 @@ namespace LSystem.Scripts
                 }
                 else
                 {
-                    AddCell(shapeSetting);
-                    UpdatePos(shapeSetting);
+                    AddCell(shapeSetting,paramValue);
+                    UpdatePos(shapeSetting,paramValue);
                 }
             }
 

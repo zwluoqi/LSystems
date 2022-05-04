@@ -108,8 +108,8 @@ namespace LSystem.Scripts.Expression
     public class ParamStackEnv
     {
         Dictionary<string,IValue> paramerrics = new Dictionary<string, IValue>();
-        public List<string> paramerKeys = new List<string>(4);
-
+        List<string> paramerKeys = new List<string>(4);
+        private IValue defaultParamValue;
         public IValue FindValue(string c)
         {
             if (paramerrics.TryGetValue(c, out var ret))
@@ -123,14 +123,28 @@ namespace LSystem.Scripts.Expression
         {
             get
             {
-                return paramerrics[paramerKeys[0]];
+                if (paramerKeys.Count > 0)
+                {
+                    return paramerrics[paramerKeys[0]];
+                }
+                else
+                {
+                    return defaultParamValue;
+                }
             }
         }
 
         public void SetParamerrics(string paramerric, IValue parseExpression)
         {
-            paramerrics[paramerric] = parseExpression;
-            this.paramerKeys.Add(paramerric);
+            if (string.IsNullOrEmpty(paramerric))
+            {
+                defaultParamValue = parseExpression;
+            }
+            else
+            {
+                paramerrics[paramerric] = parseExpression;
+                this.paramerKeys.Add(paramerric);
+            }
         }
 
         public ParamStackEnv Clone()

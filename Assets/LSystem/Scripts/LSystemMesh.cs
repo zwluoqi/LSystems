@@ -48,6 +48,10 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
         }
         for (int i = generateMeshData.subMeshDatas.Count; i < subMeshFilter.Length; i++)
         {
+            if (subMeshFilter[i] == null)
+            {
+                break;
+            }
             this.subMeshFilter[i].gameObject.SetActive(false);
         }
 
@@ -96,17 +100,15 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
         {
             LitMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
         }
-        if (!sub.TryGetComponent<MeshRenderer>(out var renderer))
+        if (!sub.TryGetComponent<MeshRenderer>(out var meshRenderer))
         {
-            var render = sub.gameObject.AddComponent<MeshRenderer>();
-            render.sharedMaterial = LitMaterial;
+            meshRenderer = sub.gameObject.AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = LitMaterial;
         }
-        else
+        
+        if (meshRenderer.sharedMaterial == null)
         {
-            if (renderer.sharedMaterial == null)
-            {
-                renderer.sharedMaterial = LitMaterial;
-            }
+            meshRenderer.sharedMaterial = LitMaterial;
         }
         
         
@@ -114,16 +116,16 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
         {
             if (treenode)
             {
-                if (renderer.sharedMaterial.name != colorSetting.material.name)
+                if (meshRenderer.sharedMaterial.name != colorSetting.material.name)
                 {
-                    renderer.sharedMaterial = colorSetting.material;
+                    meshRenderer.sharedMaterial = colorSetting.material;
                 }
             }
             else
             {
-                if (renderer.sharedMaterial.name != colorSetting.leafMaterial.name)
+                if (meshRenderer.sharedMaterial.name != colorSetting.leafMaterial.name)
                 {
-                    renderer.sharedMaterial = colorSetting.leafMaterial;
+                    meshRenderer.sharedMaterial = colorSetting.leafMaterial;
                 }
             }
         }
