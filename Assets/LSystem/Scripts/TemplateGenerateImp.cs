@@ -1,15 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using LSystem.Scripts.Expression;
 using UnityEngine;
 
 namespace LSystem.Scripts
 {
-
-    public class ParamStackEnv
-    {
-        public Dictionary<string,float> paramerrics = new Dictionary<string, float>();
-    }
     public class RuleDefine
     {
         /// <summary>
@@ -19,11 +15,7 @@ namespace LSystem.Scripts
         /// <summary>
         /// 函数参数
         /// </summary>
-        public char[] paramerrics = new char[4];
-        /// <summary>
-        /// 参数个数
-        /// </summary>
-        int paramNum = 0;
+        public string[] paramerrics = new string[4];
         /// <summary>
         /// 函数回调
         /// </summary>
@@ -31,23 +23,20 @@ namespace LSystem.Scripts
 
         public void CallAction(int iter,ParamStackEnv paramStackEnv,string paramExpression)
         {
+            ParamStackEnv paramStackEnv0 = paramStackEnv.Clone();
             var expressions = paramExpression.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
-            
-            publicAction(iter, paramStackEnv);
+            for (int i = 0; i < expressions.Length; i++)
+            {
+                paramStackEnv0.SetParamerrics(paramerrics[i], Expresssion.ParseExpression(paramStackEnv,expressions[i]));
+            }
+            publicAction(iter, paramStackEnv0);
         }
 
-        public RuleDefine(char key, char[] paramerrics,Action<int,ParamStackEnv> action)
+        public RuleDefine(char key, string[] paramerrics,Action<int,ParamStackEnv> action)
         {
             this.key = key;
             this.publicAction = action;
             Array.Copy(paramerrics,this.paramerrics,this.paramerrics.Length);
-            foreach (var t in this.paramerrics)
-            {
-                if (t != 0)
-                {
-                    paramNum++;
-                }
-            }
         }
         public RuleDefine(char key,Action<int,ParamStackEnv> action)
         {
@@ -59,7 +48,6 @@ namespace LSystem.Scripts
     
     public class TemplateGenerateImp:IGenerateImp
     {
-        // Dictionary<char,RuleDefine> ruleDefines = new Dictionary<char, RuleDefine>()
         Dictionary<char,RuleDefine> templateDefine = new Dictionary<char, RuleDefine>();
         Dictionary<char,RuleDefine> totalDefine = new Dictionary<char, RuleDefine>();
 
@@ -80,8 +68,8 @@ namespace LSystem.Scripts
 
             templateDefine.Clear();
             totalDefine.Clear();
-            // ruleDefines.Clear();
 
+            ParamStackEnv paramStackEnv = new ParamStackEnv();
             //define rule
             if (!string.IsNullOrEmpty(shapeSetting.templateRule))
             {
@@ -96,21 +84,32 @@ namespace LSystem.Scripts
             AddDefaultRule(shapeSetting);
 
             //define const
-            DefineConst(shapeSetting);
+            DefineConst(shapeSetting,ref paramStackEnv);
             
             //init rule
             var initRule = AnalyticDefine(shapeSetting,shapeSetting.initRule);
             
             //calculate
-            ParamStackEnv paramStackEnv = new ParamStackEnv();
             initRule(0,paramStackEnv);
             
             return;
         }
 
-        private void DefineConst(ShapeSetting shapeSetting)
+        private void DefineConst(ShapeSetting shapeSetting,ref ParamStackEnv paramStackEnv)
         {
-            //需要一个独立的词法分析单元
+            //TODO 需要一个独立的词法分析单元
+            foreach (var constantDefine in shapeSetting.constantDefines)
+            {
+                if (string.IsNullOrEmpty(constantDefine))
+                {
+                    continue;
+                }
+                var keyIndex = constantDefine.IndexOf('=');
+                var key = constantDefine.Substring(0, keyIndex );
+                var value = constantDefine.Substring(keyIndex + 1);
+                var iv = Expresssion.ParseExpression(paramStackEnv,value);
+                paramStackEnv.SetParamerrics(key,iv);
+            }
         }
 
         private void DefineTemplateRule(ShapeSetting shapeSetting)
@@ -134,21 +133,37 @@ namespace LSystem.Scripts
             // var rules = shapeSetting.templateRule.Split(new []{','},StringSplitOptions.RemoveEmptyEntries);
             foreach (var rule in shapeSetting.templateRules)
             {
-                var splitIndex = rule.IndexOf("->", StringComparison.Ordinal);
+                var splitIndex = rule.IndexOf('→');
+                int size = 1;
+                if (splitIndex < 0)
+                {
+                    splitIndex = rule.IndexOf("->", StringComparison.Ordinal);
+                    size = 2;
+                }
                 var defineKey = rule.Substring(0, splitIndex);
-                var defineAction = rule.Substring( splitIndex+ 2);
+                var defineAction = rule.Substring( splitIndex + size);
+                
+                string[] parametricNames = new string[4];
+                string parameName = "";
+                int parameNameNum = 0;
                 bool startParametric = false;
-                char[] parametrics = new char[4];
-                int i = 0;
+                bool startParameName = false;
                 foreach (var t in defineKey)
                 {
                     if (t == '(')
                     {
                         startParametric = true;
+                        continue;
                     }
                     if (t == ')')
                     {
+                        if (startParameName)
+                        {
+                            parametricNames[parameNameNum++] = parameName;
+                            parameName = "";
+                        }
                         startParametric = false;
+                        continue;
                     }
 
                     if (startParametric)
@@ -156,12 +171,24 @@ namespace LSystem.Scripts
                         if (t > 'a' && t < 'z'
                             || t > 'A' && t < 'Z')
                         {
-                            parametrics[i++] = t;
+                            startParameName = true;
                         }
+                        else
+                        {
+                            startParameName = false;
+                            parametricNames[parameNameNum++] = parameName;
+                            parameName = "";
+                        }
+
+                        if (startParameName)
+                        {
+                            parameName += t;
+                        }
+
                     }
                 }
                 var action = AnalyticDefine(shapeSetting,defineAction);
-                var ruleDefine = new RuleDefine(defineKey[0],parametrics,action);
+                var ruleDefine = new RuleDefine(defineKey[0],parametricNames,action);
 
                 templateDefine[ruleDefine.key] = ruleDefine;
                 totalDefine[ruleDefine.key] = ruleDefine;
@@ -176,8 +203,14 @@ namespace LSystem.Scripts
                 {
                     if (iter > shapeSetting.maxIter)
                     {
-                        AddCell(shapeSetting);
-                        UpdatePos(shapeSetting);
+                        float paramValue = 0.0f;
+                        if (paramStackEnv.FirstValue != null)
+                        {
+                            paramValue = (float)paramStackEnv.FirstValue.Value;
+                        }
+                        
+                        AddCell(shapeSetting,paramValue);
+                        UpdatePos(shapeSetting,paramValue);
                     }
                     else
                     {
@@ -191,14 +224,34 @@ namespace LSystem.Scripts
                 }
             }
 
-            totalDefine['F'] = new RuleDefine('F',ActionF);
+            if (templateDefine.TryGetValue('F', out var defineF))
+            {
+                totalDefine['F'] = new RuleDefine('F',defineF.paramerrics,ActionF);
+            }
+            else
+            {                
+                totalDefine['F'] = new RuleDefine('F',ActionF);
+            }
+
 
             void Actionf(int iter,ParamStackEnv paramStackEnv)
             {
-                UpdatePos(shapeSetting);
+                float paramValue = 0.0f;
+                if (paramStackEnv.FirstValue != null)
+                {
+                    paramValue = (float)paramStackEnv.FirstValue.Value;
+                }
+                UpdatePos(shapeSetting,paramValue);
             }
 
-            totalDefine['f'] = new RuleDefine('f',Actionf);
+            if (templateDefine.TryGetValue('f', out var definef))
+            {
+                totalDefine['f'] = new RuleDefine('f',definef.paramerrics, Actionf);
+            }
+            else
+            {
+                totalDefine['f'] = new RuleDefine('f', Actionf);
+            }
         }
 
         // F：前进，且建立几何体
@@ -221,6 +274,8 @@ namespace LSystem.Scripts
                 for (int i = 0; i < define.Length; i++)
                 {
                     var key = define[i];
+                    int newIndex = i;
+                    var lambdaExpression = GetLambdaExpression(define,ref newIndex);
                     switch (key)
                     {
                         case '[':
@@ -232,15 +287,36 @@ namespace LSystem.Scripts
                             stringBuilder.AppendLine("PopEvn");
                             break;
                         case '+':
-                            Turn(shapeSetting.angle);
+                        {
+                            var iv = Expresssion.ParseExpression(paramStackEnv, lambdaExpression);
+                            if (iv == null)
+                            {
+                                Turn(shapeSetting.angle);
+                            }
+                            else
+                            {
+                                Turn((float)iv.Value); 
+                            }
+                        }
                             stringBuilder.AppendLine("Turn(+)");
                             break;
                         case '-':
+                        case '−':
                             Turn(-shapeSetting.angle);
                             stringBuilder.AppendLine("Turn(-)");
                             break;
                         case '&':
-                            Pitch(shapeSetting.angle);
+                        {
+                            var iv = Expresssion.ParseExpression(paramStackEnv, lambdaExpression);
+                            if (iv == null)
+                            {
+                                Pitch(shapeSetting.angle);
+                            }
+                            else
+                            {
+                                Pitch((float)iv.Value); 
+                            }
+                        }
                             stringBuilder.AppendLine("Pitch(+)");
                             break;
                         case '^':
@@ -249,7 +325,17 @@ namespace LSystem.Scripts
                             stringBuilder.AppendLine("Pitch(-)");
                             break;
                         case '\\':
-                            Roll(shapeSetting.angle);
+                        {
+                            var iv = Expresssion.ParseExpression(paramStackEnv, lambdaExpression);
+                            if (iv == null)
+                            {
+                                Roll(shapeSetting.angle);
+                            }
+                            else
+                            {
+                                Roll((float)iv.Value); 
+                            }
+                        }
                             stringBuilder.AppendLine("Roll(+)");
                             break;
                         case '/':
@@ -289,31 +375,12 @@ namespace LSystem.Scripts
                         default:
                             if (totalDefine.ContainsKey(key))
                             {
-                                if (i < define.Length-1)
-                                {
-                                    if (define[i + 1] == '(')
-                                    {
-                                        int curCheckIndex = i;
-                                        do
-                                        {
-                                            i++;
-                                        } while (define[i + 1] != ')');
-
-                                        var lambdaExpression =
-                                            define.Substring(curCheckIndex + 2, i - curCheckIndex - 2);
-                                        totalDefine[key].CallAction(iter + 1, paramStackEnv, lambdaExpression);
-                                    }
-                                    else
-                                    {
-                                        totalDefine[key].CallAction(iter + 1, paramStackEnv, "");
-                                    }
-                                }
-                                else
-                                {
-                                    totalDefine[key].CallAction(iter + 1, paramStackEnv, "");
-                                }
-
+                                totalDefine[key].CallAction(iter + 1, paramStackEnv, lambdaExpression);
                                 stringBuilder.AppendLine(key + "(iter+1)");
+                                if (!string.IsNullOrEmpty( lambdaExpression))
+                                {
+                                    i = newIndex + 1;
+                                }
                             }
                             else
                             {
@@ -328,6 +395,31 @@ namespace LSystem.Scripts
             return tmp;
         }
 
+        private string GetLambdaExpression(string define, ref int i)
+        {
+            if (i < define.Length-1)
+            {
+                if (define[i + 1] == '(')
+                {
+                    int curCheckIndex = i;
+                    do
+                    {
+                        i++;
+                    } while (define[i + 1] != ')');
 
+                    var lambdaExpression =
+                        define.Substring(curCheckIndex + 2, i - curCheckIndex - 1);
+                    return lambdaExpression;
+                }
+                else
+                {
+                    return "";
+                }
+            }
+            else
+            {
+                return "";
+            }
+        }
     }
 }

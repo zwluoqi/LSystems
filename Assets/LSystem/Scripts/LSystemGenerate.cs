@@ -131,13 +131,13 @@ public abstract class IGenerateImp
     public abstract void  Generate(ShapeSetting shapeSetting);
     public GenerateMeshData generateMeshData = new GenerateMeshData();
 
-    protected  void UpdatePos(ShapeSetting shapeSetting)
+    protected  void UpdatePos(ShapeSetting shapeSetting,float parametricVal=0.0f)
     {
         if (curEvn.startSavePos)
         {
             curEvn.subMeshData.vector3s.Add(curEvn.pos);
         }
-        var length = shapeSetting.size.y * curEvn.lengthScale;
+        var length = (parametricVal>0?parametricVal:1)*shapeSetting.size.y * curEvn.lengthScale;
         curEvn.pos += curEvn.up * length;
         if (curEvn.startSavePos)
         {
@@ -149,11 +149,11 @@ public abstract class IGenerateImp
         }
     }
 
-    void UpdateRect(ShapeSetting shapeSetting)
+    void UpdateRect(ShapeSetting shapeSetting,float parametricVal=0.0f)
     {
         var forward = Vector3.Cross(curEvn.right, curEvn.up);
 
-        var length = shapeSetting.size.y * curEvn.lengthScale;
+        var length = (parametricVal>0?parametricVal:1)*shapeSetting.size.y * curEvn.lengthScale;
         
         // var scale = Mathf.Lerp(1, 0.25f, _stack.Count*1.0f / shapeSetting.maxIter);
         var scale = 1;
@@ -170,9 +170,9 @@ public abstract class IGenerateImp
         }
     }
 
-    protected  void AddCell(ShapeSetting shapeSetting)
+    protected  void AddCell(ShapeSetting shapeSetting,float parametricVal=0.0f)
     {
-        UpdateRect(shapeSetting);
+        UpdateRect(shapeSetting,parametricVal);
 
         int startIndex = generateMeshData.vector3s.Count;
 

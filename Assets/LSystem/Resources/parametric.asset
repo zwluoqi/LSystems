@@ -10,20 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
-  m_Name: treeleaf3
+  m_Name: parametric
   m_EditorClassIdentifier: 
   generateType: 2
-  angle: 22.4
-  lengthFactor: 0.5
+  angle: 71.2
+  lengthFactor: 0.7
   widthIncrementFactor: 0
   maxIter: 5
-  size: {x: 0.1, y: 1}
+  size: {x: 0.1, y: 29.29}
   templateRule: 
   templateRules:
-  - "L->[\u2019\u2019\u2019\u2227\u2227{-f+f+f-|-f+f+f}]"
-  - S->FLL
-  - F->S/////F
-  - "A->[&FL!A]/////\u2019[&FL!A]///////\u2019[&FL!A]"
+  - "F(x)\u2192F(x\u2217p)+F(x\u2217h)\u2212\u2212F(x\u2217h)+F(x\u2217q)"
   constantDefines:
-  - Pi=12
-  initRule: A
+  - p=0.3
+  - c=1
+  - q=c-p
+  - m=p*q
+  - h=m^0.5
+  initRule: F(1)
