@@ -155,7 +155,8 @@ public abstract class IGenerateImp
 
         var length = shapeSetting.size.y * curEvn.lengthScale;
         
-        var scale = Mathf.Lerp(1, 0.25f, _stack.Count*1.0f / shapeSetting.maxIter);
+        // var scale = Mathf.Lerp(1, 0.25f, _stack.Count*1.0f / shapeSetting.maxIter);
+        var scale = 1;
         var width = (shapeSetting.size.x + curEvn.widthIncrement)*scale;
         rect[0] = curEvn.pos + curEvn.right*width*(-0.5f)+curEvn.up*0-forward * width*0.5f;
         rect[1] = curEvn.pos + curEvn.right*width*0.5f+curEvn.up*0-forward * width*0.5f;
@@ -236,13 +237,13 @@ public abstract class IGenerateImp
     
     protected void RotationF(ShapeSetting shapeSetting)
     {
-        Rotation(shapeSetting.rotationStrength,shapeSetting.rotationFrequency, shapeSetting.angle);
+        Rotation(0,1, shapeSetting.angle);
     }
 
     
     protected  void RotationB(ShapeSetting shapeSetting)
     {
-        Rotation(shapeSetting.rotationStrength,shapeSetting.rotationFrequency, -shapeSetting.angle);
+        Rotation(0,1, -shapeSetting.angle);
     }
     
         

@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: Color Setting
   m_EditorClassIdentifier: 
   material: {fileID: 2100000, guid: 7961dd34ef8c14abeb5fc71300bfe084, type: 2}
-  leafMaterial: {fileID: 2100000, guid: be90e4c7fb7fc460d98c591310f9d2a9, type: 2}
+  leafMaterial: {fileID: 2100000, guid: bba0bcc04a1504288b3f41dc3384dae8, type: 2}

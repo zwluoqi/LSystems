@@ -5,17 +5,68 @@ using UnityEngine;
 
 namespace LSystem.Scripts
 {
+
+    public class ParamStackEnv
+    {
+        public Dictionary<string,float> paramerrics = new Dictionary<string, float>();
+    }
+    public class RuleDefine
+    {
+        /// <summary>
+        /// 函数名
+        /// </summary>
+        public char key;
+        /// <summary>
+        /// 函数参数
+        /// </summary>
+        public char[] paramerrics = new char[4];
+        /// <summary>
+        /// 参数个数
+        /// </summary>
+        int paramNum = 0;
+        /// <summary>
+        /// 函数回调
+        /// </summary>
+        Action<int,ParamStackEnv> publicAction;
+
+        public void CallAction(int iter,ParamStackEnv paramStackEnv,string paramExpression)
+        {
+            var expressions = paramExpression.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
+            
+            publicAction(iter, paramStackEnv);
+        }
+
+        public RuleDefine(char key, char[] paramerrics,Action<int,ParamStackEnv> action)
+        {
+            this.key = key;
+            this.publicAction = action;
+            Array.Copy(paramerrics,this.paramerrics,this.paramerrics.Length);
+            foreach (var t in this.paramerrics)
+            {
+                if (t != 0)
+                {
+                    paramNum++;
+                }
+            }
+        }
+        public RuleDefine(char key,Action<int,ParamStackEnv> action)
+        {
+            this.key = key;
+            this.publicAction = action;
+
+        }
+    }
     
     public class TemplateGenerateImp:IGenerateImp
     {
-        List<char> param = new List<char>();
-        Dictionary<char,Action<int>> templateDefine = new Dictionary<char, Action<int>>();
-        Dictionary<char,Action<int>> totalDefine = new Dictionary<char, Action<int>>();
+        // Dictionary<char,RuleDefine> ruleDefines = new Dictionary<char, RuleDefine>()
+        Dictionary<char,RuleDefine> templateDefine = new Dictionary<char, RuleDefine>();
+        Dictionary<char,RuleDefine> totalDefine = new Dictionary<char, RuleDefine>();
 
         
         public override void Generate(ShapeSetting shapeSetting)
         {
-            if (string.IsNullOrEmpty(shapeSetting.templateRule))
+            if (string.IsNullOrEmpty(shapeSetting.templateRule)&& shapeSetting.templateRules.Length == 0)
             {
                 Debug.LogError("shapeSetting.templateRule is nil");
                 return;
@@ -29,43 +80,97 @@ namespace LSystem.Scripts
 
             templateDefine.Clear();
             totalDefine.Clear();
-            param.Clear();
-            
-            for (int i = 0; i < shapeSetting.templateRule.Length; i++)
-            {
-                if (shapeSetting.templateRule[i] > 'a' && shapeSetting.templateRule[i] < 'z'
-                ||shapeSetting.templateRule[i] > 'A' && shapeSetting.templateRule[i] < 'Z')
-                {
-                    if (param.IndexOf(shapeSetting.templateRule[i]) < 0)
-                    {
-                        param.Add(shapeSetting.templateRule[i]);
-                    }
-                }
-            }
+            // ruleDefines.Clear();
 
             //define rule
-            var rules = shapeSetting.templateRule.Split(new []{','},StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < rules.Length; i++)
+            if (!string.IsNullOrEmpty(shapeSetting.templateRule))
             {
-                var define = rules[i].Substring(rules[i].IndexOf('=') + 1);
-                templateDefine[rules[i][0]] = AnalyticDefine(shapeSetting,define);
-                totalDefine[rules[i][0]] = templateDefine[rules[i][0]];
+                DefineTemplateRule(shapeSetting);
+            }
+            else
+            {
+                DefineArrayTemplateRule(shapeSetting);
             }
 
+            //default rule
             AddDefaultRule(shapeSetting);
+
+            //define const
+            DefineConst(shapeSetting);
             
             //init rule
             var initRule = AnalyticDefine(shapeSetting,shapeSetting.initRule);
             
             //calculate
-            initRule(0);
+            ParamStackEnv paramStackEnv = new ParamStackEnv();
+            initRule(0,paramStackEnv);
             
             return;
         }
 
+        private void DefineConst(ShapeSetting shapeSetting)
+        {
+            //需要一个独立的词法分析单元
+        }
+
+        private void DefineTemplateRule(ShapeSetting shapeSetting)
+        {
+            //define rule
+            var rules = shapeSetting.templateRule.Split(new []{','},StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < rules.Length; i++)
+            {
+                var defineAction = rules[i].Substring(rules[i].IndexOf('=') + 1);
+                var action = AnalyticDefine(shapeSetting,defineAction);
+                var ruleDefine = new RuleDefine(rules[i][0],action);
+                
+                templateDefine[ruleDefine.key] = ruleDefine;
+                totalDefine[ruleDefine.key] = ruleDefine;
+            }
+        }
+        
+        private void DefineArrayTemplateRule(ShapeSetting shapeSetting)
+        {
+            //define rule
+            // var rules = shapeSetting.templateRule.Split(new []{','},StringSplitOptions.RemoveEmptyEntries);
+            foreach (var rule in shapeSetting.templateRules)
+            {
+                var splitIndex = rule.IndexOf("->", StringComparison.Ordinal);
+                var defineKey = rule.Substring(0, splitIndex);
+                var defineAction = rule.Substring( splitIndex+ 2);
+                bool startParametric = false;
+                char[] parametrics = new char[4];
+                int i = 0;
+                foreach (var t in defineKey)
+                {
+                    if (t == '(')
+                    {
+                        startParametric = true;
+                    }
+                    if (t == ')')
+                    {
+                        startParametric = false;
+                    }
+
+                    if (startParametric)
+                    {
+                        if (t > 'a' && t < 'z'
+                            || t > 'A' && t < 'Z')
+                        {
+                            parametrics[i++] = t;
+                        }
+                    }
+                }
+                var action = AnalyticDefine(shapeSetting,defineAction);
+                var ruleDefine = new RuleDefine(defineKey[0],parametrics,action);
+
+                templateDefine[ruleDefine.key] = ruleDefine;
+                totalDefine[ruleDefine.key] = ruleDefine;
+            }
+        }
+
         private void AddDefaultRule(ShapeSetting shapeSetting)
         {
-            void ActionF(int iter)
+            void ActionF(int iter,ParamStackEnv paramStackEnv)
             {
                 if (templateDefine.TryGetValue('F', out var defineF))
                 {
@@ -76,7 +181,7 @@ namespace LSystem.Scripts
                     }
                     else
                     {
-                        defineF(iter);
+                        defineF.CallAction(iter,paramStackEnv,"");
                     }
                 }
                 else
@@ -86,14 +191,14 @@ namespace LSystem.Scripts
                 }
             }
 
-            totalDefine['F'] = ActionF;
+            totalDefine['F'] = new RuleDefine('F',ActionF);
 
-            void Actionf(int iter)
+            void Actionf(int iter,ParamStackEnv paramStackEnv)
             {
                 UpdatePos(shapeSetting);
             }
 
-            totalDefine['f'] = Actionf; 
+            totalDefine['f'] = new RuleDefine('f',Actionf);
         }
 
         // F：前进，且建立几何体
@@ -103,9 +208,10 @@ namespace LSystem.Scripts
         // ~：随机角度。如~F就是往随机角度前进一个单位
         // [ ]：分支结构
         
-        private Action<int> AnalyticDefine(ShapeSetting shapeSetting,string define)
+        private Action<int,ParamStackEnv> AnalyticDefine(ShapeSetting shapeSetting,string define)
         {
-            Action<int> tmp = delegate(int iter)
+            // string.Format()
+            Action<int,ParamStackEnv> tmp = delegate(int iter,ParamStackEnv paramStackEnv)
             {
                 if (iter > shapeSetting.maxIter)
                 {
@@ -183,7 +289,30 @@ namespace LSystem.Scripts
                         default:
                             if (totalDefine.ContainsKey(key))
                             {
-                                totalDefine[key](iter + 1);
+                                if (i < define.Length-1)
+                                {
+                                    if (define[i + 1] == '(')
+                                    {
+                                        int curCheckIndex = i;
+                                        do
+                                        {
+                                            i++;
+                                        } while (define[i + 1] != ')');
+
+                                        var lambdaExpression =
+                                            define.Substring(curCheckIndex + 2, i - curCheckIndex - 2);
+                                        totalDefine[key].CallAction(iter + 1, paramStackEnv, lambdaExpression);
+                                    }
+                                    else
+                                    {
+                                        totalDefine[key].CallAction(iter + 1, paramStackEnv, "");
+                                    }
+                                }
+                                else
+                                {
+                                    totalDefine[key].CallAction(iter + 1, paramStackEnv, "");
+                                }
+
                                 stringBuilder.AppendLine(key + "(iter+1)");
                             }
                             else
