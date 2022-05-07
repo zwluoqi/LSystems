@@ -9,15 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
-  m_Name: tree
+  m_Script: {fileID: 11500000, guid: 4a768e936aeaa40129f721cd9f5fb076, type: 3}
+  m_Name: tree_leaf4Color
   m_EditorClassIdentifier: 
-  generateType: 2
-  rotationStrength: 0
-  rotationFrequency: 0
-  angle: 30.61
-  lengthFactor: 1
-  maxIter: 4
-  size: {x: 0.1, y: 1}
-  templateRule: X=F+[[X]-X]-F[-FX]+X,F=FF
-  initRule: X
+  material: {fileID: 2100000, guid: 7961dd34ef8c14abeb5fc71300bfe084, type: 2}
+  leafMaterial: {fileID: 2100000, guid: 5194aeac4c7ce4db5b3773b4991b5371, type: 2}

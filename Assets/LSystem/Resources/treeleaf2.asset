@@ -12,12 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
   m_Name: treeleaf2
   m_EditorClassIdentifier: 
+  shapeType: 0
+  meshTopology: 0
   generateType: 2
-  rotationStrength: 0
-  rotationFrequency: 0
-  angle: 22.5
+  angle: 22.3
   lengthFactor: 1
+  widthIncrementFactor: 0
   maxIter: 3
   size: {x: 0.1, y: 1}
+  defaultSize: {x: 1, y: 1}
   templateRule: F=FF+[+F-F-F]-[-F+F+F]
+  templateRules: []
+  constantDefines: []
   initRule: F

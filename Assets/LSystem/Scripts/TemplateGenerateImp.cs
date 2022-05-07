@@ -1,56 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using LSystem.Scripts.Expression;
 using UnityEngine;
 
 namespace LSystem.Scripts
 {
-    public class RuleDefine
-    {
-        /// <summary>
-        /// 函数名
-        /// </summary>
-        public char key;
-        /// <summary>
-        /// 函数参数
-        /// </summary>
-        public string[] paramerrics = new string[4];
-        /// <summary>
-        /// 函数回调
-        /// </summary>
-        Action<int,ParamStackEnv> publicAction;
-
-        public void CallAction(int iter,ParamStackEnv paramStackEnv,string paramExpression)
-        {
-            ParamStackEnv paramStackEnv0 = paramStackEnv.Clone();
-            var expressions = paramExpression.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < expressions.Length; i++)
-            {
-                paramStackEnv0.SetParamerrics(paramerrics[i], Expresssion.ParseExpression(paramStackEnv,expressions[i]));
-            }
-            publicAction(iter, paramStackEnv0);
-        }
-
-        public RuleDefine(char key, string[] paramerrics,Action<int,ParamStackEnv> action)
-        {
-            this.key = key;
-            this.publicAction = action;
-            Array.Copy(paramerrics,this.paramerrics,this.paramerrics.Length);
-        }
-        public RuleDefine(char key,Action<int,ParamStackEnv> action)
-        {
-            this.key = key;
-            this.publicAction = action;
-
-        }
-    }
+    
     
     public class TemplateGenerateImp:IGenerateImp
     {
-        Dictionary<char,RuleDefine> templateDefine = new Dictionary<char, RuleDefine>();
         Dictionary<char,RuleDefine> totalDefine = new Dictionary<char, RuleDefine>();
-
+        Dictionary<char,PredefineShape> preDefineShapes = new Dictionary<char, PredefineShape>();
         
         public override void Generate(ShapeSetting shapeSetting)
         {
@@ -66,7 +28,12 @@ namespace LSystem.Scripts
             }
             
 
-            templateDefine.Clear();
+            preDefineShapes.Clear();
+            foreach (var predefine in shapeSetting.predefineShapes)
+            {
+                preDefineShapes[predefine.shapeKey] = predefine;
+            }
+            
             totalDefine.Clear();
 
             ParamStackEnv paramStackEnv = new ParamStackEnv();
@@ -79,9 +46,6 @@ namespace LSystem.Scripts
             {
                 DefineArrayTemplateRule(shapeSetting);
             }
-
-            //default rule
-            AddDefaultRule(shapeSetting);
 
             //define const
             DefineConst(shapeSetting,ref paramStackEnv);
@@ -97,7 +61,6 @@ namespace LSystem.Scripts
 
         private void DefineConst(ShapeSetting shapeSetting,ref ParamStackEnv paramStackEnv)
         {
-            //TODO 需要一个独立的词法分析单元
             foreach (var constantDefine in shapeSetting.constantDefines)
             {
                 if (string.IsNullOrEmpty(constantDefine))
@@ -120,10 +83,12 @@ namespace LSystem.Scripts
             {
                 var defineAction = rules[i].Substring(rules[i].IndexOf('=') + 1);
                 var action = AnalyticDefine(shapeSetting,defineAction);
-                var ruleDefine = new RuleDefine(rules[i][0],action);
-                
-                templateDefine[ruleDefine.key] = ruleDefine;
-                totalDefine[ruleDefine.key] = ruleDefine;
+                if (!totalDefine.TryGetValue(rules[i][0], out var ruleDefine))
+                {
+                    ruleDefine = new RuleDefine(rules[i][0]);
+                    totalDefine[ruleDefine.key] = ruleDefine;
+                }
+                ruleDefine.AddBranch(action);
             }
         }
         
@@ -141,118 +106,42 @@ namespace LSystem.Scripts
                     size = 2;
                 }
                 var defineKey = rule.Substring(0, splitIndex);
+                defineKey = defineKey.Replace( " ", "");
                 var defineAction = rule.Substring( splitIndex + size);
                 defineAction = defineAction.Replace( " ", "");
                 
+                
+                ///参数
                 string[] parametricNames = new string[4];
-                string parameName = "";
-                int parameNameNum = 0;
-                bool startParametric = false;
-                bool startParameName = false;
-                foreach (var t in defineKey)
+                var startParametricIndex = defineKey.IndexOf('(');
+                var endParametricIndex = defineKey.IndexOf(')');
+                if (startParametricIndex > 0 && endParametricIndex > 0)
                 {
-                    if (t == '(')
-                    {
-                        startParametric = true;
-                        continue;
-                    }
-                    if (t == ')')
-                    {
-                        if (startParameName)
-                        {
-                            parametricNames[parameNameNum++] = parameName;
-                            parameName = "";
-                        }
-                        startParametric = false;
-                        continue;
-                    }
-
-                    if (startParametric)
-                    {
-                        if (t > 'a' && t < 'z'
-                            || t > 'A' && t < 'Z')
-                        {
-                            startParameName = true;
-                        }
-                        else
-                        {
-                            startParameName = false;
-                            parametricNames[parameNameNum++] = parameName;
-                            parameName = "";
-                        }
-
-                        if (startParameName)
-                        {
-                            parameName += t;
-                        }
-
-                    }
+                    var parameNameStr = defineKey.Substring(startParametricIndex + 1,
+                        endParametricIndex - startParametricIndex - 1);
+                    var splitParams = parameNameStr.Split(new[] {','});
+                    Array.Copy(splitParams, parametricNames, Mathf.Min(splitParams.Length, 4));
                 }
+
+                //条件
+                var startConditionIdnex = defineKey.IndexOf(':');
+                string conditionExpression = "";
+                if (startConditionIdnex > 0 && !defineKey.Contains('*'))
+                {
+                    conditionExpression = defineKey.Substring(startConditionIdnex + 1);
+                }
+
                 var action = AnalyticDefine(shapeSetting,defineAction);
-                var ruleDefine = new RuleDefine(defineKey[0],parametricNames,action);
 
-                templateDefine[ruleDefine.key] = ruleDefine;
-                totalDefine[ruleDefine.key] = ruleDefine;
+                if (!totalDefine.TryGetValue(defineKey[0], out var ruleDefine))
+                {
+                    ruleDefine = new RuleDefine(defineKey[0],parametricNames);
+                    totalDefine[ruleDefine.key] = ruleDefine;
+                }
+                ruleDefine.AddBranch(conditionExpression, action);
             }
         }
 
-        private void AddDefaultRule(ShapeSetting shapeSetting)
-        {
-            void ActionF(int iter,ParamStackEnv paramStackEnv)
-            {
-                float paramValue = 0.0f;
-                if (paramStackEnv.FirstValue != null)
-                {
-                    paramValue = (float)paramStackEnv.FirstValue.Value;
-                }
-                if (templateDefine.TryGetValue('F', out var defineF))
-                {
-                    if (iter > shapeSetting.maxIter)
-                    {
-                        AddCell(shapeSetting,paramValue);
-                        UpdatePos(shapeSetting,paramValue);
-                    }
-                    else
-                    {
-                        defineF.CallAction(iter,paramStackEnv,"");
-                    }
-                }
-                else
-                {
-                    AddCell(shapeSetting,paramValue);
-                    UpdatePos(shapeSetting,paramValue);
-                }
-            }
-
-            if (templateDefine.TryGetValue('F', out var defineF))
-            {
-                totalDefine['F'] = new RuleDefine('F',defineF.paramerrics,ActionF);
-            }
-            else
-            {                
-                totalDefine['F'] = new RuleDefine('F',ActionF);
-            }
-
-
-            void Actionf(int iter,ParamStackEnv paramStackEnv)
-            {
-                float paramValue = 0.0f;
-                if (paramStackEnv.FirstValue != null)
-                {
-                    paramValue = (float)paramStackEnv.FirstValue.Value;
-                }
-                UpdatePos(shapeSetting,paramValue);
-            }
-
-            if (templateDefine.TryGetValue('f', out var definef))
-            {
-                totalDefine['f'] = new RuleDefine('f',definef.paramerrics, Actionf);
-            }
-            else
-            {
-                totalDefine['f'] = new RuleDefine('f', Actionf);
-            }
-        }
 
         // F：前进，且建立几何体
         // f：前进，但不建立几何体
@@ -266,128 +155,39 @@ namespace LSystem.Scripts
             // string.Format()
             Action<int,ParamStackEnv> tmp = delegate(int iter,ParamStackEnv paramStackEnv)
             {
-                if (iter > shapeSetting.maxIter)
-                {
-                    return;
-                }
                 StringBuilder stringBuilder = new StringBuilder();
                 for (int i = 0; i < define.Length; i++)
                 {
                     var key = define[i];
                     int newIndex = i;
-                    var lambdaExpression = GetLambdaExpression(define,ref newIndex);
-                    switch (key)
+                    var parametricExpression = GetParametricExpression(define,ref newIndex);
+                    if (iter > shapeSetting.maxIter)
                     {
-                        case '[':
-                            PushEnv();
-                            stringBuilder.AppendLine("PushEnv");
-                            break;
-                        case ']':
-                            PopEvn();
-                            stringBuilder.AppendLine("PopEvn");
-                            break;
-                        case '+':
+                        KeywordProcess(paramStackEnv,stringBuilder,key,shapeSetting,parametricExpression);
+                    }
+                    else
+                    {
+                        if (totalDefine.ContainsKey(key))
                         {
-                            var iv = Expresssion.ParseExpression(paramStackEnv, lambdaExpression);
-                            if (iv == null)
+                            var success = totalDefine[key].AttemptAction(iter + 1, paramStackEnv, parametricExpression);
+                            if (success)
                             {
-                                Turn(shapeSetting.angle);
+                                WriteFunctionCall(stringBuilder, key + "(iter+1)");
                             }
                             else
                             {
-                                Turn((float)iv.Value); 
+                                KeywordProcess(paramStackEnv,stringBuilder,key, shapeSetting, parametricExpression);
                             }
                         }
-                            stringBuilder.AppendLine("Turn(+)");
-                            break;
-                        case '-':
-                        case '−':
-                            Turn(-shapeSetting.angle);
-                            stringBuilder.AppendLine("Turn(-)");
-                            break;
-                        case '&':
+                        else
                         {
-                            var iv = Expresssion.ParseExpression(paramStackEnv, lambdaExpression);
-                            if (iv == null)
-                            {
-                                Pitch(shapeSetting.angle);
-                            }
-                            else
-                            {
-                                Pitch((float)iv.Value); 
-                            }
+                            KeywordProcess(paramStackEnv,stringBuilder,key, shapeSetting, parametricExpression);
                         }
-                            stringBuilder.AppendLine("Pitch(+)");
-                            break;
-                        case '^':
-                        case '∧':
-                            Pitch(-shapeSetting.angle);
-                            stringBuilder.AppendLine("Pitch(-)");
-                            break;
-                        case '\\':
-                        {
-                            var iv = Expresssion.ParseExpression(paramStackEnv, lambdaExpression);
-                            if (iv == null)
-                            {
-                                Roll(shapeSetting.angle);
-                            }
-                            else
-                            {
-                                Roll((float)iv.Value); 
-                            }
-                        }
-                            stringBuilder.AppendLine("Roll(+)");
-                            break;
-                        case '/':
-                            Roll(-shapeSetting.angle);
-                            stringBuilder.AppendLine("Roll(-)");
-                            break;
-                        case '|':
-                            TurnBack();
-                            stringBuilder.AppendLine("TurnBack()");
-                            break;
-                        case '<':
-                            DivideLength(shapeSetting);
-                            stringBuilder.AppendLine("DivideLength(shapeSetting)");
-                            break;
-                        case '>':
-                            MultipleLength(shapeSetting);
-                            stringBuilder.AppendLine("MultipleLength(shapeSetting)");
-                            break;
-                        case '#':
-                            IncrementWidth(shapeSetting);
-                            stringBuilder.AppendLine("IncrementWidth(shapeSetting)");
-                            break;
-                        case '!':
-                            DecrementWidth(shapeSetting);
-                            stringBuilder.AppendLine("DecrementWidth(shapeSetting)");
-                            break;
-                        case '{':
-                            StartSaveSubsequentPos();
-                            break;
-                        case '}':
-                            FillSavedPolygon();
-                            break;
-                        case '\'':
-                        case '’':
-                            //TODO color
-                            break;
-                        default:
-                            if (totalDefine.ContainsKey(key))
-                            {
-                                totalDefine[key].CallAction(iter + 1, paramStackEnv, lambdaExpression);
-                                stringBuilder.AppendLine(key + "(iter+1)");
-                                if (!string.IsNullOrEmpty( lambdaExpression))
-                                {
-                                    i = newIndex + 1;
-                                }
-                            }
-                            else
-                            {
-                                Debug.LogError("not support "+key);
-                            }
+                    }
 
-                            break;
+                    if (!string.IsNullOrEmpty( parametricExpression))
+                    {
+                        i = newIndex + 1;
                     }
                 }
                 // Debug.LogWarning(stringBuilder.ToString());
@@ -395,7 +195,185 @@ namespace LSystem.Scripts
             return tmp;
         }
 
-        private string GetLambdaExpression(string define, ref int i)
+        private void KeywordProcess(ParamStackEnv paramStackEnv,StringBuilder stringBuilder, char key,ShapeSetting shapeSetting,string parametricExpression)
+        {
+            float v = 0;
+            IValue iv = null;
+            switch (key)
+            {
+                case '[':
+                    PushEnv();
+                    WriteFunctionCall(stringBuilder,"PushEnv");
+                    break;
+                case ']':
+                    PopEvn();
+                    WriteFunctionCall(stringBuilder,"PopEvn");
+                    break;
+                case '+':
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    Turn(iv == null ? shapeSetting.angle : v);
+                    WriteFunctionCall(stringBuilder,"Turn(+)");
+                    break;
+                case '-':
+                case '−':
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    Turn(iv == null ? -shapeSetting.angle : -v);
+                    WriteFunctionCall(stringBuilder,"Turn(-)");
+                    break;
+                case '&':
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    Pitch(iv == null ?shapeSetting.angle:v);
+                    WriteFunctionCall(stringBuilder,"Pitch(+)");
+                    break;
+                case '^':
+                case '∧':
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    Pitch(iv == null ? -shapeSetting.angle : -v);
+                    WriteFunctionCall(stringBuilder,"Pitch(-)");
+                    break;
+                case '\\':
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    Roll(iv == null ?shapeSetting.angle:v);
+                    WriteFunctionCall(stringBuilder,"Roll(+)");
+                    break;
+                case '/':
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    Roll(iv == null ?-shapeSetting.angle:-v);
+                    WriteFunctionCall(stringBuilder,"Roll(-)");
+                    break;
+                case '|':
+                    TurnBack();
+                    WriteFunctionCall(stringBuilder,"TurnBack()");
+                    break;
+                case '$':
+                    RotateTurtleToVertical();
+                    WriteFunctionCall(stringBuilder,"RotateTurtleToVertical()");
+                    break;
+                case '<':
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    DivideLength(iv == null ?shapeSetting.lengthFactor:v);
+                    WriteFunctionCall(stringBuilder,"DivideLength(shapeSetting)");
+                    break;
+                case '>':
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    MultipleLength(iv == null ?shapeSetting.lengthFactor:v);
+                    WriteFunctionCall(stringBuilder,"MultipleLength(shapeSetting)");
+                    break;
+                case '#':
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    IncrementWidth(iv == null ?  shapeSetting.widthIncrementFactor : v);
+                    WriteFunctionCall(stringBuilder,"IncrementWidth(shapeSetting)");
+                    break;
+                case '!':
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    DecrementWidth(iv == null ?  shapeSetting.widthIncrementFactor : v);
+                    WriteFunctionCall(stringBuilder, "DecrementWidth(shapeSetting)");
+                    break;
+                case '{':
+                    StartSaveSubsequentPos();
+                    break;
+                case '}':
+                    FillSavedPolygon();
+                    break;
+                case '\'':
+                case '’':
+                    //TODO color
+                    break;
+                case 'G'://前进
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    UpdatePos(shapeSetting,v);
+                    break;
+                case '.'://记录节点
+                    SavePos(shapeSetting);
+                    break;
+                case  'f'://记录节点前进
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    SavePos(shapeSetting);
+                    UpdatePos(shapeSetting,v);
+                    break;
+                case 'F'://绘制图形前进
+                    iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                    if (iv != null)
+                    {
+                        v = (float)iv.Value;
+                    }
+                    AddCell(shapeSetting,v);
+                    UpdatePos(shapeSetting,v);
+                    break;
+                default:
+                    if (preDefineShapes.TryGetValue(key,out var predefineShape))
+                    {
+                        AddPredefineShape(predefineShape);
+                    }else if (!totalDefine.ContainsKey(key))
+                    {
+                        Debug.LogError("not support " + key);
+                    }
+                    break;
+            }
+        }
+
+        private void AddPredefineShape(PredefineShape predefineShape)
+        {
+            var predefineShapeData = new PredefineMeshData
+                {pos = curEvn.pos, up = curEvn.up, right = curEvn.right, shareMesh = predefineShape.shape};
+            generateMeshData.subPredefineDatas.Add(predefineShapeData);
+        }
+
+
+        private void WriteFunctionCall(StringBuilder stringBuilder, string pushenv)
+        {
+            //
+        }
+
+        private string GetParametricExpression(string define, ref int i)
         {
             if (i < define.Length-1)
             {
@@ -405,6 +383,7 @@ namespace LSystem.Scripts
                     do
                     {
                         i++;
+                        //TODO 寻找对称反括号 
                     } while (define[i + 1] != ')');
 
                     var lambdaExpression =

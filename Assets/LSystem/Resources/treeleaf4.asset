@@ -10,14 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
-  m_Name: funy1
+  m_Name: treeleaf4
   m_EditorClassIdentifier: 
+  shapeType: 2
+  meshTopology: 3
   generateType: 2
-  rotationStrength: 0
-  rotationFrequency: 0
-  angle: 90
-  lengthFactor: 1
-  maxIter: 2
+  angle: 17.9
+  lengthFactor: 0.5
+  widthIncrementFactor: 0
+  maxIter: 10
   size: {x: 0.1, y: 1}
-  templateRule: F=FF+F-F+F+FF
-  initRule: F+F+F+F
+  defaultSize: {x: 1, y: 1}
+  templateRule: 
+  templateRules:
+  - "A \u2192 [+A{.].C.}"
+  - "B \u2192 [-B{.].C.}"
+  - "C \u2192 GC"
+  constantDefines:
+  - Pi=12
+  initRule: '[A][B]'

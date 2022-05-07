@@ -10,21 +10,26 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
-  m_Name: parametric
+  m_Name: modeling-tree2
   m_EditorClassIdentifier: 
+  shapeType: 0
+  meshTopology: 0
   generateType: 2
-  angle: 81.64
-  lengthFactor: 0.7
+  angle: 67.23
+  lengthFactor: 1
   widthIncrementFactor: 0
-  maxIter: 5
-  size: {x: 0.1, y: 29.29}
+  maxIter: 6
+  size: {x: 0.01, y: 0.3}
+  defaultSize: {x: 192.51, y: 1}
   templateRule: 
   templateRules:
-  - "F(x)\u2192F(x\u2217p)+F(x\u2217h)\u2212\u2212F(x\u2217h)+F(x\u2217q)"
+  - "A\u2192!(vr)F(50)[&(a)F(50)A]/(d1)[&(a)F(50)A]/(d2)[&(a)F(50)A]"
+  - "F(l)\u2192F(l*lr)"
+  - "!(w)\u2192!(w*vr)"
   constantDefines:
-  - p=0.3
-  - c=1
-  - q=c-p
-  - m=p*q
-  - h=m^0.5
-  initRule: F(1)
+  - d1=94.74
+  - d2=132.63
+  - a=18.95
+  - lr=1.109
+  - vr=1.732
+  initRule: '!(1)F(200)/(45)A'

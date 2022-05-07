@@ -1,108 +1,128 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace LSystem.Scripts.Expression
 {
 
     public sealed class Expresssion
     {
+        static InfixToRPN infixToRpn = new InfixToRPN();
+        
+        static IValue ParseExpression0(ParamStackEnv env,string sourceExpression, string[] tokens)
+        {
+            Stack<IValue> tokenValue = new Stack<IValue>();
+            for (int i = 0; i < tokens.Length; i++)
+            {
+                var token = tokens[i];
+                if (infixToRpn.isOperator(token))
+                {
+                    if (tokenValue.Count == 0)
+                    {
+                        Debug.LogError("token empty,"+sourceExpression);
+                    }
+                    var b = tokenValue.Pop();
+                    if (tokenValue.Count == 0)
+                    {
+                        Debug.LogError("token empty,"+sourceExpression);
+                    }
+                    var a = tokenValue.Pop();
+                    var ret = OperatorValue(token,a, b);
+                    tokenValue.Push(ret);
+                }
+                else
+                {
+                    var find = env.FindValue(token);
+                    if (find != null)
+                    {
+                        tokenValue.Push(new Number(find.Value));
+                    }
+                    else
+                    {
+                        if (Double.TryParse(token, out var val))
+                        {
+                            tokenValue.Push(new Number(val));
+                        }
+                        else
+                        {
+                            throw new NotImplementedException(token);
+                        }
+                    }
+                }
+            }
+
+            return tokenValue.Pop();
+        }
+
+        private static IValue OperatorValue(string operatorChar,IValue a, IValue b)
+        {
+            switch (operatorChar)
+            {
+                case "+":
+                    return new OperationSum(new []{a,b});
+                case "-":
+                    return new OperationSum(new []{a,new OperationNegate(b)});
+                case "*":
+                case "∗":
+                    return new OperationMul(new []{a,b});
+                case "/":
+                    return new OperationMul(new []{a,new OperationReciprocal(b)});
+                case "^":
+                    return new OperationPower(a,b);
+                case "<":
+                    return new BooleanNumber(a.Value<b.Value);
+                case ">":
+                    return new BooleanNumber(a.Value>b.Value);
+                case "==":
+                case "=":
+                    return new BooleanNumber(Math.Abs(a.Value - b.Value) < Mathf.Epsilon);
+                case "<=":
+                    return new BooleanNumber(a.Value<=b.Value);
+                case ">=":
+                    return new BooleanNumber(a.Value>=b.Value);
+                default:
+                    throw new NotImplementedException(""+operatorChar);
+                    break;
+            }   
+        }
+
+        public static Dictionary<string,string[]> convertDict = new Dictionary<string, string[]>();
         public static IValue ParseExpression(ParamStackEnv env,string expression)
         {
             if (string.IsNullOrEmpty(expression))
             {
                 return null;
             }
-            // int index = expression.IndexOf('(');
-            //
-            // while (index>0)
-            // {
-            //     var endIndex = expression.LastIndexOf(')');
-            // }
-            if (expression.Contains("+"))
+
+            if (!convertDict.TryGetValue(expression, out var tokenList))
             {
-                var splitExp = expression.Split(new[] {'+'}, StringSplitOptions.RemoveEmptyEntries);
-                List<IValue> splitValue = new List<IValue>(splitExp.Length);
-                for (int i = 0; i < splitExp.Length; i++)
+                string newExpression = "";
+                string tmpName = "";
+                for (int i = 0; i < expression.Length; i++)
                 {
-                    var iv = ParseExpression(env,splitExp[i]);
-                    splitValue.Add(iv);
-                }
-                return new OperationSum(splitValue.ToArray());
-            }else if (expression.Contains("-"))
-            {
-                var splitExp = expression.Split(new[] {'-'}, StringSplitOptions.RemoveEmptyEntries);
-                List<IValue> splitValue = new List<IValue>(splitExp.Length);
-                for (int i = 0; i < splitExp.Length; i++)
-                {
-                    var iv = ParseExpression(env,splitExp[i]);
-                    if (i > 0)
+                    var t = expression[i];
+                    if (infixToRpn.isOperator(t+"")
+                        || t=='(' || t==')')
                     {
-                        iv = new OperationNegate(iv);
+                        newExpression += tmpName + " ";
+                        tmpName = "";
+                        newExpression += t + " ";
                     }
-                    splitValue.Add(iv);
-                }
-                return new OperationSum(splitValue.ToArray());
-            }
-            else if (expression.Contains("*"))
-            {
-                var splitExp = expression.Split(new[] {'*'}, StringSplitOptions.RemoveEmptyEntries);
-                List<IValue> splitValue = new List<IValue>(splitExp.Length);
-                for (int i = 0; i < splitExp.Length; i++)
-                {
-                    var iv = ParseExpression(env,splitExp[i]);
-                    splitValue.Add(iv);
-                }
-                return new OperationMul(splitValue.ToArray());
-            }
-            else if (expression.Contains("∗"))
-            {
-                var splitExp = expression.Split(new[] {'∗'}, StringSplitOptions.RemoveEmptyEntries);
-                List<IValue> splitValue = new List<IValue>(splitExp.Length);
-                for (int i = 0; i < splitExp.Length; i++)
-                {
-                    var iv = ParseExpression(env,splitExp[i]);
-                    splitValue.Add(iv);
-                }
-                return new OperationMul(splitValue.ToArray());
-            }
-            else if (expression.Contains("/"))
-            {
-                var splitExp = expression.Split(new[] {'/'}, StringSplitOptions.RemoveEmptyEntries);
-                List<IValue> splitValue = new List<IValue>(splitExp.Length);
-                for (int i = 0; i < splitExp.Length; i++)
-                {
-                    var iv = ParseExpression(env,splitExp[i]);
-                    if (i > 0)
+                    else
                     {
-                        iv = new OperationReciprocal(iv);
+                        tmpName += t;
                     }
-                    splitValue.Add(iv);
                 }
-                return new OperationMul(splitValue.ToArray());
+
+                newExpression += tmpName + " ";
+
+                var postfixExpression = infixToRpn.GetRPNExpression(newExpression);
+                tokenList = postfixExpression.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries);
+                convertDict.Add(expression,tokenList);
             }
             
-            else if (expression.Contains("^"))
-            {
-                var splitExp = expression.Split(new[] {'^'}, StringSplitOptions.RemoveEmptyEntries);
-                var baseValue = ParseExpression(env,splitExp[0]);
-                var pow = ParseExpression(env,splitExp[1]);
-                return new OperationPower(baseValue,pow);
-            }
-            
-
-            var find = env.FindValue(expression);
-            if (find != null)
-            {
-                return new Number(find.Value);
-            }
-
-            if (Double.TryParse(expression, out var val))
-            {
-                return new Number(val);
-            }
-
-            throw new NotImplementedException(expression);
+            return ParseExpression0(env,expression, tokenList);
         }
     }
     public class ParamStackEnv
@@ -278,4 +298,23 @@ namespace LSystem.Scripts.Expression
         }
 
     }
+    
+    public class BooleanNumber : IValue
+    {
+        private double m_Value;
+        public double Value
+        {
+            get { return m_Value; }
+            set { m_Value = value; }
+        }
+        public BooleanNumber(bool aValue)
+        {
+            m_Value = aValue ? 1 : 0;
+        }
+        public override string ToString()
+        {
+            return "" + m_Value + "";
+        }
+    }
+    
 }

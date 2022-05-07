@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using LSystem.Scripts.FillShape;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -15,47 +16,25 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
     public MeshFilter[] subMeshFilter;
     private LSystemGenerate _lSystemGenerate = new LSystemGenerate();
     private Material LitMaterial;
+
     void GenerateMesh()
     {
-        meshFilter = FillMeshFilter(meshFilter,"main",true);
-        
-        meshFilter.sharedMesh.Clear();
         var generateMeshData = _lSystemGenerate.Generate(shapeSetting);
-        meshFilter.sharedMesh.indexFormat = IndexFormat.UInt32;
-        meshFilter.sharedMesh.vertices = generateMeshData.vector3s.ToArray();
-        meshFilter.sharedMesh.triangles = generateMeshData.triangents.ToArray();
-        meshFilter.sharedMesh.uv = generateMeshData.uvs.ToArray();
-        meshFilter.sharedMesh.RecalculateNormals();
-        meshFilter.sharedMesh.RecalculateTangents();
 
-        _InitSubMesh(generateMeshData.subMeshDatas.Count);
-        for (int i = 0; i < generateMeshData.subMeshDatas.Count; i++)
-        {
-            var sub = this.subMeshFilter[i];
-            sub.gameObject.SetActive(true);
-
-            Mesh sharedMesh;
-            generateMeshData.subMeshDatas[i].Normalize();
-            sub.transform.localPosition = generateMeshData.subMeshDatas[i].centerPos;
-            int[] triangles = GetTriangles(generateMeshData.subMeshDatas[i].vector3s,out var uvs);
-            sharedMesh =  sub.sharedMesh;
-            sharedMesh.Clear();
-            sharedMesh.vertices = generateMeshData.subMeshDatas[i].vector3s.ToArray();
-            sharedMesh.triangles = triangles;
-            sharedMesh.uv = uvs;
-            sharedMesh.RecalculateNormals();
-            sharedMesh.RecalculateTangents();
-        }
-        for (int i = generateMeshData.subMeshDatas.Count; i < subMeshFilter.Length; i++)
-        {
-            if (subMeshFilter[i] == null)
-            {
-                break;
-            }
-            this.subMeshFilter[i].gameObject.SetActive(false);
-        }
+        FillMeshData(generateMeshData);
 
     }
+
+    private void FillMeshData(GenerateMeshData generateMeshData)
+    {
+        
+        meshFilter = FillMeshFilter(meshFilter,"main",true);
+        _InitSubMesh(generateMeshData.subMeshDatas.Count+generateMeshData.subPredefineDatas.Count);
+
+        IFillShape.FillMesh(shapeSetting, meshFilter, subMeshFilter,generateMeshData);
+    }
+
+
 
     private void _InitSubMesh(int count)
     {
@@ -151,44 +130,5 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
     }
     
     
-    public static int[] GetTriangles(List<Vector3> vector3s,out Vector2[] uvs)
-    {
-        if (vector3s.Count == 6)
-        {
-            int[] triangles = new int[4*3];
-            uvs = new Vector2[vector3s.Count];
-            int i = 0;
-            triangles[i++] = 0;
-            triangles[i++] = 1;
-            triangles[i++] = 5;
-                
-            triangles[i++] = 5;
-            triangles[i++] = 1;
-            triangles[i++] = 2;
-                
-            triangles[i++] = 2;
-            triangles[i++] = 4;
-            triangles[i++] = 5;
-                
-            triangles[i++] = 4;
-            triangles[i++] = 2;
-            triangles[i++] = 3;
-                
-            uvs[0] = new Vector2(0,0.5f);
-            uvs[1] = new Vector2(1.0f/3.0f,0.0f);
-            uvs[2] = new Vector2(2.0f/3.0f,0.0f);
-            uvs[3] = new Vector2(1,0.5f);
-            uvs[4] = new Vector2(2.0f/3.0f,1.0f);
-            uvs[5] = new Vector2(1.0f/3.0f,1.0f);
-                
-            return triangles;
-        }
-        else
-        {
-            uvs = null;
-            return vector3s.Select(((vector3, i) => i)).ToArray();
-                
-        }
-    }
 }
 

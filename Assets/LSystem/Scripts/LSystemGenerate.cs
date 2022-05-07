@@ -8,24 +8,33 @@ using UnityEngine;
 
 public class GenerateMeshData
 {
-    public List<Vector3> vector3s = new List<Vector3>();
-    public List<int> triangents = new List<int>();
-    public List<Vector2> uvs = new List<Vector2>();
+    public List<Vector3> vector3s = new List<Vector3>(65536);
+    public List<int> triangents = new List<int>(65536);
+    public List<Vector2> uvs = new List<Vector2>(65536);
     
     public List<SubMeshData> subMeshDatas = new List<SubMeshData>();
+    public List<PredefineMeshData> subPredefineDatas = new List<PredefineMeshData>();
 }
 
-public class SubMeshData:ICloneable
+public class PredefineMeshData 
+{
+    public Vector3 pos;
+    public Mesh shareMesh;
+    public Vector3 up;
+    public Vector3 right;
+}
+
+public class SubMeshData
 {
     public Vector3 centerPos;
-    public List<Vector3> vector3s = new List<Vector3>();
-    public object Clone()
-    {
-        SubMeshData newSub = new SubMeshData();
-        newSub.vector3s.AddRange(vector3s);
-        newSub.centerPos = this.centerPos;
-        return newSub;
-    }
+    public List<Vector3> vector3s = new List<Vector3>(8);
+    // public object Clone()
+    // {
+    //     SubMeshData newSub = new SubMeshData();
+    //     newSub.vector3s.AddRange(vector3s);
+    //     newSub.centerPos = this.centerPos;
+    //     return newSub;
+    // }
 
     public void Normalize()
     {
@@ -74,8 +83,6 @@ public class LsystemEnv
     public  Vector3 pos = Vector3.zero;
     public float lengthScale = 1.0f;
     public float widthIncrement = 0;
-    public bool startSavePos = false;
-    public SubMeshData subMeshData;
 
     public int id = 0;
     private static int idGenerater = 0;
@@ -87,11 +94,11 @@ public class LsystemEnv
         pos = curEvn.pos;
         lengthScale = curEvn.lengthScale;
         widthIncrement = curEvn.widthIncrement;
-        startSavePos = curEvn.startSavePos;
-        if (curEvn.subMeshData != null)
-        {
-            subMeshData = (SubMeshData)curEvn.subMeshData.Clone();
-        }
+        // startSavePos = curEvn.startSavePos;
+        // if (curEvn.subMeshData != null)
+        // {
+        //     subMeshData = (SubMeshData)curEvn.subMeshData.Clone();
+        // }
     }
 
     public LsystemEnv()
@@ -101,7 +108,7 @@ public class LsystemEnv
 
     public override string ToString()
     {
-        return "up:" + up + ",righe:" + right + ",pos" + pos;
+        return "up:" + up + ",righe:" + right + ",pos:" + pos + ",widthIncrement:" + widthIncrement;
     }
 }
 
@@ -125,39 +132,51 @@ public abstract class IGenerateImp
     private Vector3[] tmpRect = new Vector3[8];
 
 
-    private LsystemEnv curEvn = new LsystemEnv();
+    protected LsystemEnv curEvn = new LsystemEnv();
     private Stack<LsystemEnv> _stack = new Stack<LsystemEnv>();
     private StringBuilder _stringBuilder = new StringBuilder();
     public abstract void  Generate(ShapeSetting shapeSetting);
     public GenerateMeshData generateMeshData = new GenerateMeshData();
 
+    private bool startSavePos = false;
+    private SubMeshData subMeshData;
+    protected void SavePos(ShapeSetting shapeSetting)
+    {
+        subMeshData.vector3s.Add(curEvn.pos);
+        WriteLogicLine("SavePos:" );
+    }
+    
     protected  void UpdatePos(ShapeSetting shapeSetting,float parametricVal=0.0f)
     {
-        if (curEvn.startSavePos)
-        {
-            curEvn.subMeshData.vector3s.Add(curEvn.pos);
-        }
-        var length = (parametricVal>0?parametricVal:1)*shapeSetting.size.y * curEvn.lengthScale;
+        // if (curEvn.startSavePos)
+        // {
+        //     curEvn.subMeshData.vector3s.Add(curEvn.pos);
+        // }
+        var length = (parametricVal>0?parametricVal:shapeSetting.defaultSize.y)*shapeSetting.size.y * curEvn.lengthScale;
         curEvn.pos += curEvn.up * length;
-        if (curEvn.startSavePos)
-        {
-            _stringBuilder.AppendLine("AddPos:" + curEvn.ToString());
-        }
-        else
-        {
-            _stringBuilder.AppendLine("UpdatePos:" + curEvn.ToString());
-        }
+        // if (curEvn.startSavePos)
+        // {
+        //     WriteLogicLine("AddPos:" );
+        // }
+        // else
+        // {
+        WriteLogicLine("UpdatePos:" );
+        // }
     }
 
     void UpdateRect(ShapeSetting shapeSetting,float parametricVal=0.0f)
     {
         var forward = Vector3.Cross(curEvn.right, curEvn.up);
 
-        var length = (parametricVal>0?parametricVal:1)*shapeSetting.size.y * curEvn.lengthScale;
+        var length = (parametricVal>0?parametricVal:shapeSetting.defaultSize.y)*shapeSetting.size.y * curEvn.lengthScale;
         
         // var scale = Mathf.Lerp(1, 0.25f, _stack.Count*1.0f / shapeSetting.maxIter);
         var scale = 1;
-        var width = (shapeSetting.size.x + curEvn.widthIncrement)*scale;
+        if (shapeSetting.defaultSize.x + curEvn.widthIncrement < 0)
+        {
+            Debug.LogError("width is nagitive");
+        }
+        var width = shapeSetting.size.x*(shapeSetting.defaultSize.x + curEvn.widthIncrement)*scale;
         rect[0] = curEvn.pos + curEvn.right*width*(-0.5f)+curEvn.up*0-forward * width*0.5f;
         rect[1] = curEvn.pos + curEvn.right*width*0.5f+curEvn.up*0-forward * width*0.5f;
         rect[2] = curEvn.pos + curEvn.right*width*0.5f+curEvn.up*length-forward * width*0.5f;
@@ -198,7 +217,7 @@ public abstract class IGenerateImp
         //5,1,0,4
         AddCellFace(startIndex, 5,1,0,4);
         
-        _stringBuilder.AppendLine("AddCell:"+curEvn.ToString());
+        WriteLogicLine("AddCell:");
     }
 
     private void AddCellFace(int startIndex,int i0, int i1, int i2, int i3)
@@ -256,7 +275,7 @@ public abstract class IGenerateImp
         var rotation = Quaternion.AngleAxis(angle, dir);
         curEvn.up =  (rotation * curEvn.up).normalized;
         curEvn.right = (rotation * curEvn.right).normalized;
-        _stringBuilder.AppendLine("Rotation:"+curEvn.ToString());
+        WriteLogicLine("Rotation:");
     }
 
     protected void TurnBack()
@@ -265,8 +284,23 @@ public abstract class IGenerateImp
         var rotation = Quaternion.AngleAxis(180,forward);
         curEvn.up =  (rotation * curEvn.up).normalized;
         curEvn.right = (rotation * curEvn.right).normalized;
-        _stringBuilder.AppendLine("TurnBack:"+curEvn.ToString());
+        WriteLogicLine("TurnBack:");
     }
+
+    protected void RotateTurtleToVertical()
+    {
+        // var forward = Vector3.up;
+        // curEvn.up = Vector3.Cross(forward, curEvn.right);
+        // curEvn.right = Vector3.Cross(curEvn.up, forward);
+        // var rotation = Quaternion.AngleAxis(-90,Vector3.right);
+        // curEvn.up =  (rotation * curEvn.up).normalized;
+        // curEvn.right = (rotation * curEvn.right).normalized;
+        Pitch(-45);
+        // Roll(-90);
+        // Turn(-90);
+        WriteLogicLine("RotateTurtleToVertical:");
+    }
+    
     
     protected void Turn(float angle)
     {
@@ -274,71 +308,81 @@ public abstract class IGenerateImp
         var rotation = Quaternion.AngleAxis(angle, forward);
         curEvn.up =  (rotation * curEvn.up).normalized;
         curEvn.right = (rotation * curEvn.right).normalized;
-        _stringBuilder.AppendLine($"Turn({angle}):"+curEvn.ToString());
+        WriteLogicLine($"Turn({angle}):");
     }
     protected void Pitch(float angle)
     {
         var rotation = Quaternion.AngleAxis(angle, curEvn.right);
         curEvn.up =  (rotation * curEvn.up).normalized;
         curEvn.right = (rotation * curEvn.right).normalized;
-        _stringBuilder.AppendLine($"Pitch({angle}):"+curEvn.ToString());
+        WriteLogicLine($"Pitch({angle}):");
     }
     protected void Roll(float angle)
     {
         var rotation = Quaternion.AngleAxis(angle, curEvn.up);
         curEvn.up =  rotation * curEvn.up;
         curEvn.right = rotation * curEvn.right;
-        _stringBuilder.AppendLine($"Roll({angle}):"+curEvn.ToString());
+        WriteLogicLine($"Roll({angle}):");
     }
 
+    
     protected void PushEnv()
     {
         LsystemEnv env = new LsystemEnv(curEvn);
         _stack.Push(env);
-        _stringBuilder.AppendLine("PushEnv:"+curEvn.ToString());
+        WriteLogicLine("PushEnv:");
     }
 
     protected void PopEvn()
     {
         curEvn = _stack.Pop();
-        _stringBuilder.AppendLine("PopEvn:"+curEvn.ToString());
+        WriteLogicLine("PopEvn:");
     }
     
-    protected void DivideLength(ShapeSetting shapeSetting)
+    protected void DivideLength(float lengthFactor)
     {
-        curEvn.lengthScale /= shapeSetting.lengthFactor;
+        curEvn.lengthScale /= lengthFactor;
+        WriteLogicLine("DivideLength:");
     }
 
-    protected void MultipleLength(ShapeSetting shapeSetting)
+    protected void MultipleLength(float lengthFactor)
     {
-        curEvn.lengthScale *= shapeSetting.lengthFactor;
+        curEvn.lengthScale *= lengthFactor;
+        WriteLogicLine("MultipleLength:");
     }
     
-    protected void IncrementWidth(ShapeSetting shapeSetting)
+    protected void IncrementWidth(float width)
     {
-        curEvn.widthIncrement += shapeSetting.size.x*shapeSetting.widthIncrementFactor;
+        curEvn.widthIncrement += width;
+        WriteLogicLine("IncrementWidth:");
     }
 
-    protected void DecrementWidth(ShapeSetting shapeSetting)
+    protected void DecrementWidth(float width)
     {
-        curEvn.widthIncrement -= shapeSetting.size.x*shapeSetting.widthIncrementFactor;
+        curEvn.widthIncrement -= width;
+        WriteLogicLine("DecrementWidth:");
     }
 
     protected void StartSaveSubsequentPos()
     {
-        curEvn.startSavePos = true;
-        curEvn.subMeshData = new SubMeshData();
-        _stringBuilder.AppendLine("StartSaveSubsequentPos:"+curEvn.ToString());
+        startSavePos = true;
+        subMeshData = new SubMeshData();
+        WriteLogicLine("StartSaveSubsequentPos:");
     }
 
     protected void FillSavedPolygon()
     {
-        curEvn.startSavePos = false;
-        generateMeshData.subMeshDatas.Add(curEvn.subMeshData);
-        curEvn.subMeshData = null;
-        _stringBuilder.AppendLine("FillSavedPolygon:"+curEvn.ToString());
+        startSavePos = false;
+        generateMeshData.subMeshDatas.Add(subMeshData);
+        subMeshData = null;
+        WriteLogicLine("FillSavedPolygon:");
     }
 
+    public void WriteLogicLine(string title)
+    {
+        // _stringBuilder.AppendLine(title+curEvn.ToString());
+    }
+    
     public void SaveFile(ShapeSetting shapeSetting)
     {
         File.WriteAllText(shapeSetting.name+"_"+shapeSetting.generateType.ToString()+"_"+shapeSetting.maxIter.ToString()+".txt",_stringBuilder.ToString());

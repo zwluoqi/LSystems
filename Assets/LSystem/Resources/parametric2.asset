@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: parametric2
   m_EditorClassIdentifier: 
   generateType: 2
-  angle: 88
+  angle: 86.8
   lengthFactor: 1.28
   widthIncrementFactor: 0
   maxIter: 10

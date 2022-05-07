@@ -10,20 +10,27 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
-  m_Name: treeleaf3
+  m_Name: modeling-tree1
   m_EditorClassIdentifier: 
+  shapeType: 0
+  meshTopology: 0
   generateType: 2
-  angle: 22.4
-  lengthFactor: 0.5
+  angle: 67.21111
+  lengthFactor: 1
   widthIncrementFactor: 0
-  maxIter: 5
-  size: {x: 0.1, y: 1}
+  maxIter: 6
+  size: {x: 0.01, y: 10}
+  defaultSize: {x: 40.87, y: 1}
   templateRule: 
   templateRules:
-  - "L->[\u2019\u2019\u2019\u2227\u2227{-f+f+f-|-f+f+f}]"
-  - S->FLL
-  - F->S/////F
-  - "A->[&FL!A]/////\u2019[&FL!A]///////\u2019[&FL!A]"
+  - "A(l,w)\u2192!(w)F(l)[&(a0)B(l*r2,w*wr)]/(d)A(l*r1,w*wr)"
+  - "B(l,w)\u2192!(w)F(l)[-(a2)$C(l*r2,w*wr)]C(l*r1,w*wr)"
+  - "C(l,w)\u2192!(w)F(l)[+(a2)$B(l*r2,w*wr)]B(l*r1,w*wr)"
   constantDefines:
-  - Pi=12
-  initRule: A
+  - r1=0.9
+  - r2=0.6
+  - a0=45
+  - a2=45
+  - d=137.5
+  - wr=0.707
+  initRule: A(1,10)
