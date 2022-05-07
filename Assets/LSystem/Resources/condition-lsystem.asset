@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
+  m_Name: condition-lsystem
+  m_EditorClassIdentifier: 
+  shapeType: 0
+  meshTopology: 0
+  generateType: 2
+  angle: 81.64121
+  lengthFactor: 0.7
+  widthIncrementFactor: 0
+  maxIter: 7
+  size: {x: 0.1, y: 0.1}
+  defaultSize: {x: 1, y: 1}
+  templateRule: 
+  templateRules:
+  - "a(t) : t<Ta \u2192 F(1)[&(30)\u223CL(0)]/(137.5)a(t+1)"
+  - "a(t) : t=Ta \u2192 F(20)A"
+  - "A : * \u2192 \u223CK(0)"
+  - "L(t) : t<TL \u2192 L(t+1)"
+  - "K(t) : t<TK \u2192 K(t+1)"
+  - "F(l) : l<2 \u2192 F(l+0.2)"
+  constantDefines:
+  - Ta=7
+  - TL=9
+  - TK=5
+  initRule: a(1)
+  predefineShapes:
+  - shapeKey: 76
+    shape: {fileID: 4300000, guid: 05c17fc80ecb5504c85093653990f080, type: 2}
+  - shapeKey: 75
+    shape: {fileID: 4300000, guid: 09aeedcf8d4d3e240a98b375c280a708, type: 2}
