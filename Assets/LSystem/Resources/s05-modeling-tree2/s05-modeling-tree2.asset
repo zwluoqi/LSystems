@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
+  m_Name: s05-modeling-tree2
+  m_EditorClassIdentifier: 
+  shapeType: 0
+  meshTopology: 0
+  generateType: 2
+  angle: 67.23
+  lengthFactor: 1
+  widthIncrementFactor: 0
+  maxIter: 6
+  size: {x: 0.01, y: 0.3}
+  defaultSize: {x: 192.51, y: 1}
+  templateRule: 
+  templateRules:
+  - "A\u2192!(vr)F(50)[&(a)F(50)A]/(d1)[&(a)F(50)A]/(d2)[&(a)F(50)A]"
+  - "F(l)\u2192F(l*lr)"
+  - "!(w)\u2192!(w*vr)"
+  constantDefines:
+  - d1=94.74
+  - d2=132.63
+  - a=18.95
+  - lr=1.109
+  - vr=1.732
+  initRule: '!(1)F(200)/(45)A'

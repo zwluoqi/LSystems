@@ -130,6 +130,7 @@ namespace LSystem.Scripts.Expression
         Dictionary<string,IValue> paramerrics = new Dictionary<string, IValue>();
         List<string> paramerKeys = new List<string>(4);
         private IValue defaultParamValue;
+
         public IValue FindValue(string c)
         {
             if (paramerrics.TryGetValue(c, out var ret))

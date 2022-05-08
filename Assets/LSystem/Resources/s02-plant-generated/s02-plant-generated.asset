@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
+  m_Name: s02-plant-generated
+  m_EditorClassIdentifier: 
+  shapeType: 0
+  meshTopology: 0
+  generateType: 2
+  angle: 18
+  lengthFactor: 0.5
+  widthIncrementFactor: 0
+  maxIter: 5
+  size: {x: 0.1, y: 0.5}
+  defaultSize: {x: 1, y: 1}
+  templateRule: 
+  templateRules:
+  - "P \u2192 I + [ P + K] \u2212 \u2212 // [ \u2212 \u2212 L ] I [ + + L ] \u2212
+    [ P K ] + + P K"
+  - "I\u2192FS[//&&L][//\u2227\u2227L]FS"
+  - "S\u2192SFS"
+  - "L\u2192[\u2019{+f\u2212ff\u2212f+|+f\u2212ff\u2212f}]"
+  - "K\u2192[&&&X\u2018/W////W//// W //// W //// W ]"
+  - "X \u2192 FF"
+  - "W\u2192[\u2018\u2227F][{&&&&\u2212f+f|\u2212f+f}]"
+  constantDefines:
+  - Pi=12
+  initRule: P
+  predefineShapes: []

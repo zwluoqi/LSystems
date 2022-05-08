@@ -12,12 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
   m_Name: s01-branching
   m_EditorClassIdentifier: 
+  shapeType: 0
+  meshTopology: 0
   generateType: 2
-  rotationStrength: 0
-  rotationFrequency: 0
-  angle: 30.61
+  angle: 22.5
   lengthFactor: 1
-  maxIter: 4
-  size: {x: 0.1, y: 1}
+  widthIncrementFactor: 0
+  maxIter: 5
+  size: {x: 0.1, y: 0.2}
+  defaultSize: {x: 1, y: 1}
   templateRule: X=F+[[X]-X]-F[-FX]+X,F=FF
+  templateRules: []
+  constantDefines: []
   initRule: X
+  predefineShapes: []

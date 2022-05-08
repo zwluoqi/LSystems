@@ -31,7 +31,7 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
         meshFilter = FillMeshFilter(meshFilter,"main",true);
         _InitSubMesh(generateMeshData.subMeshDatas.Count+generateMeshData.subPredefineDatas.Count);
 
-        IFillShape.FillMesh(shapeSetting, meshFilter, subMeshFilter,generateMeshData);
+        IFillShape.FillMesh(shapeSetting,colorSetting, meshFilter, subMeshFilter,generateMeshData);
     }
 
 

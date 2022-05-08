@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a768e936aeaa40129f721cd9f5fb076, type: 3}
+  m_Name: s04-parametric-lsystem2-color
+  m_EditorClassIdentifier: 
+  material: {fileID: 2100000, guid: 7961dd34ef8c14abeb5fc71300bfe084, type: 2}
+  leafMaterial: {fileID: 2100000, guid: bba0bcc04a1504288b3f41dc3384dae8, type: 2}
+  templateShapes:
+  - shapeKey: 76
+    shapeIndex: 0
+    sharedMesh: {fileID: 4300000, guid: 05c17fc80ecb5504c85093653990f080, type: 2}
+    material: {fileID: 2100000, guid: bba0bcc04a1504288b3f41dc3384dae8, type: 2}
+  - shapeKey: 75
+    shapeIndex: 0
+    sharedMesh: {fileID: 4300000, guid: 09aeedcf8d4d3e240a98b375c280a708, type: 2}
+    material: {fileID: 2100000, guid: 915679d8691a03047af3f561b5098429, type: 2}

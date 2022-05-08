@@ -159,6 +159,12 @@ namespace LSystem.Scripts
                 for (int i = 0; i < define.Length; i++)
                 {
                     var key = define[i];
+                    if (curEvn.breakingBranch && key !=']')
+                    {
+                        continue;
+                    }
+                    curEvn.breakingBranch = false;
+                    
                     int newIndex = i;
                     var parametricExpression = GetParametricExpression(define,ref newIndex);
                     if (iter > shapeSetting.maxIter)
@@ -317,6 +323,7 @@ namespace LSystem.Scripts
                     break;
                 case '\'':
                 case '’':
+                case '‘':
                     //TODO color
                     break;
                 case 'G'://前进
@@ -330,7 +337,7 @@ namespace LSystem.Scripts
                 case '.'://记录节点
                     SavePos(shapeSetting);
                     break;
-                case  'f'://记录节点前进
+                case 'f'://记录节点前进
                     iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
                     if (iv != null)
                     {
@@ -345,13 +352,30 @@ namespace LSystem.Scripts
                     {
                         v = (float)iv.Value;
                     }
+
+                    if (startSavePos)
+                    {
+                        SavePos(shapeSetting);
+                    }
                     AddCell(shapeSetting,v);
                     UpdatePos(shapeSetting,v);
+                    break;
+                case '∼':
+                    Debug.LogWarning("绘制几何体");
+                    break;
+                case '%':
+                    Debug.LogWarning("剔除掉剩余分支");
+                    curEvn.breakingBranch = true;
                     break;
                 default:
                     if (preDefineShapes.TryGetValue(key,out var predefineShape))
                     {
-                        AddPredefineShape(predefineShape);
+                        iv = Expresssion.ParseExpression(paramStackEnv, parametricExpression);
+                        if (iv != null)
+                        {
+                            v = (float)iv.Value;
+                        }
+                        AddPredefineShape(predefineShape,v);
                     }else if (!totalDefine.ContainsKey(key))
                     {
                         Debug.LogError("not support " + key);
@@ -360,10 +384,10 @@ namespace LSystem.Scripts
             }
         }
 
-        private void AddPredefineShape(PredefineShape predefineShape)
+        private void AddPredefineShape(PredefineShape predefineShape,float p)
         {
             var predefineShapeData = new PredefineMeshData
-                {pos = curEvn.pos, up = curEvn.up, right = curEvn.right, shareMesh = predefineShape.shape};
+                {pos = curEvn.pos, up = curEvn.up, right = curEvn.right, shapeKey = predefineShape.shapeKey,preParam = p};
             generateMeshData.subPredefineDatas.Add(predefineShapeData);
         }
 

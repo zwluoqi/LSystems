@@ -29,9 +29,27 @@ namespace LSystem.Scripts.FillShape
                 mesh.RecalculateTangents();
             }
 
+            for (int i = 0; i < subMeshFilter.Length; i++)
+            {
+                if (subMeshFilter[i] == null)
+                {
+                    break;
+                }
+                this.subMeshFilter[i].gameObject.SetActive(false);
+            }
+            
+            int meshIndex = 0;
             for (int i = 0; i < generateMeshData.subMeshDatas.Count; i++)
             {
-                var sub = this.subMeshFilter[i];
+                var sub = this.subMeshFilter[meshIndex];
+                if (generateMeshData.subMeshDatas[i].vector3s.Count < 3)
+                {
+                    // Debug.LogError("vertex count small 3");
+                    // sub.gameObject.SetActive(false);
+                    continue;
+                }
+
+                meshIndex++;
                 sub.gameObject.SetActive(true);
 
                 generateMeshData.subMeshDatas[i].Normalize();
@@ -62,19 +80,48 @@ namespace LSystem.Scripts.FillShape
                 sub.transform.localPosition = generateMeshData.subPredefineDatas[i].pos;
                 sub.transform.forward = Vector3.Cross(generateMeshData.subPredefineDatas[i].right,
                     generateMeshData.subPredefineDatas[i].up);
-                
-                var sharedMesh = sub.sharedMesh;
-                sub.sharedMesh = generateMeshData.subPredefineDatas[i].shareMesh;
+
+                var shapeKey = generateMeshData.subPredefineDatas[i].shapeKey;
+                var shapeIndex = (int) generateMeshData.subPredefineDatas[i].preParam;
+                var shape = GetColorTemplateShape(shapeKey, shapeIndex);
+                if (shape == null)
+                {
+                    shape = GetColorTemplateShape(shapeKey, 0);    
+                }
+                if (shape != null)
+                {
+                    sub.sharedMesh = UnityEngine.Object.Instantiate(shape.sharedMesh);
+                    sub.GetComponent<MeshRenderer>().sharedMaterial = shape.material;
+                }
+                else
+                {
+                    Debug.LogError($"not find shape:{shapeKey} key:{shapeIndex}");
+                }
+
+                // var preParam = generateMeshData.subPredefineDatas[i].preParam;
+                // var scale = Vector3.one;
+                // if (preParam > 0)
+                // {
+                //     var scaleFactor = preParam;
+                //     scale = (new Vector3(scaleFactor,scaleFactor,scaleFactor));
+                // }
+                //
+                sub.transform.localScale = Vector3.one;
+            }
+        }
+
+        private TemplateShape GetColorTemplateShape(char shapeKey, int preParam)
+        {
+            for (int i = 0; i < colorSetting.templateShapes.Length; i++)
+            {
+                var temp = colorSetting.templateShapes[i];
+                if (temp.shapeKey == shapeKey && temp.shapeIndex == preParam)
+                {
+                    return temp;
+                }
             }
 
-            for (int i = generateMeshData.subMeshDatas.Count + generateMeshData.subPredefineDatas.Count; i < subMeshFilter.Length; i++)
-            {
-                if (subMeshFilter[i] == null)
-                {
-                    break;
-                }
-                this.subMeshFilter[i].gameObject.SetActive(false);
-            }
+            return null;
         }
     }
 }

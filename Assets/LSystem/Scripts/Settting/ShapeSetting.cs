@@ -14,7 +14,7 @@ public class ShapeSetting : ScriptableObject
     public float lengthFactor = 1;
     [Range(0,1)]
     public float widthIncrementFactor=0;
-    [Range(1,10)]
+    [Range(1,30)]
     public int maxIter = 1;
     public Vector2 size = new Vector2(0.1f,1);
     public Vector2 defaultSize = new Vector2(1f,1);
@@ -30,7 +30,7 @@ public class ShapeSetting : ScriptableObject
 public class PredefineShape
 {
     public char shapeKey;
-    public Mesh shape;
+    // public Mesh shape;
 }
 
 [Serializable]
@@ -38,7 +38,7 @@ public enum ShapeType
 {
     SimpleNode,
     Tree,
-    Leaf,
+    MergeSubMesh,
 }
 
 [Serializable]

@@ -19,9 +19,10 @@ public class GenerateMeshData
 public class PredefineMeshData 
 {
     public Vector3 pos;
-    public Mesh shareMesh;
+    public char shapeKey;
     public Vector3 up;
     public Vector3 right;
+    public float preParam;
 }
 
 public class SubMeshData
@@ -83,7 +84,7 @@ public class LsystemEnv
     public  Vector3 pos = Vector3.zero;
     public float lengthScale = 1.0f;
     public float widthIncrement = 0;
-
+    public bool breakingBranch = false;
     public int id = 0;
     private static int idGenerater = 0;
     public LsystemEnv(LsystemEnv curEvn)
@@ -94,11 +95,6 @@ public class LsystemEnv
         pos = curEvn.pos;
         lengthScale = curEvn.lengthScale;
         widthIncrement = curEvn.widthIncrement;
-        // startSavePos = curEvn.startSavePos;
-        // if (curEvn.subMeshData != null)
-        // {
-        //     subMeshData = (SubMeshData)curEvn.subMeshData.Clone();
-        // }
     }
 
     public LsystemEnv()
@@ -138,7 +134,7 @@ public abstract class IGenerateImp
     public abstract void  Generate(ShapeSetting shapeSetting);
     public GenerateMeshData generateMeshData = new GenerateMeshData();
 
-    private bool startSavePos = false;
+    protected bool startSavePos = false;
     private SubMeshData subMeshData;
     protected void SavePos(ShapeSetting shapeSetting)
     {
