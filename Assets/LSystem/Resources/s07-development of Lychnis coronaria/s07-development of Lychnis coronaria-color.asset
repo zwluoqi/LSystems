@@ -23,7 +23,7 @@ MonoBehaviour:
     iterScale: 0
   - shapeKey: 75
     shapeIndex: 0
-    sharedMesh: {fileID: 4300000, guid: d45b719be2f9744008e04751a31eb991, type: 2}
+    sharedMesh: {fileID: 4300000, guid: 09aeedcf8d4d3e240a98b375c280a708, type: 2}
     material: {fileID: 2100000, guid: 915679d8691a03047af3f561b5098429, type: 2}
-    scale: 0.6
+    scale: 0.03
     iterScale: 1

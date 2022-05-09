@@ -85,6 +85,7 @@ namespace LSystem.Scripts.FillShape
                 var sub = this.subMeshFilter[generateMeshData.subMeshDatas.Count+i];
                 sub.gameObject.SetActive(true);
                 
+                
                 sub.transform.localPosition = generateMeshData.subPredefineDatas[i].pos;
                 sub.transform.forward = Vector3.Cross(generateMeshData.subPredefineDatas[i].right,
                     generateMeshData.subPredefineDatas[i].up);
@@ -102,14 +103,14 @@ namespace LSystem.Scripts.FillShape
                 {
                     sub.sharedMesh = UnityEngine.Object.Instantiate(shape.sharedMesh);
                     sub.GetComponent<MeshRenderer>().sharedMaterial = shape.material;
-                    
+                    var preParam = generateMeshData.subPredefineDatas[i].preParam;
+
                     if (shape.iterScale && useDefalutShape)
                     {
-                        var preParam = generateMeshData.subPredefineDatas[i].preParam;
                         var scale = Vector3.one;
                         if (preParam > 0)
                         {
-                            var scaleFactor = 1/preParam;
+                            var scaleFactor = preParam;
                             scale = (new Vector3(scaleFactor, scaleFactor, scaleFactor));
                         }
                         sub.transform.localScale =  shape.scale*scale;
@@ -118,6 +119,8 @@ namespace LSystem.Scripts.FillShape
                     {
                         sub.transform.localScale = Vector3.one* shape.scale;
                     }
+
+                    sub.name = shape.shapeKey + "("+preParam+")";
                 }
                 else
                 {

@@ -360,7 +360,7 @@ namespace LSystem.Scripts
                     }
                     break;
                 case '∼':
-                    Debug.LogWarning("绘制几何体");
+                    // Debug.LogWarning("绘制几何体");
                     break;
                 case '%':
                     Debug.LogWarning("剔除掉剩余分支");

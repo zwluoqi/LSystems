@@ -12,12 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d5b94c66f37b2e4a93d927cac204152, type: 3}
   m_Name: s04-parametric-lsystem
   m_EditorClassIdentifier: 
+  shapeType: 0
+  meshTopology: 0
   generateType: 2
   angle: 81.64
   lengthFactor: 0.7
   widthIncrementFactor: 0
   maxIter: 5
   size: {x: 0.1, y: 29.29}
+  defaultSize: {x: 1, y: 1}
   templateRule: 
   templateRules:
   - "F(x)\u2192F(x\u2217p)+F(x\u2217h)\u2212\u2212F(x\u2217h)+F(x\u2217q)"
@@ -28,3 +31,4 @@ MonoBehaviour:
   - m=p*q
   - h=m^0.5
   initRule: F(1)
+  predefineShapes: []
