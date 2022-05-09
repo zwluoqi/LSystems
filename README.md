@@ -5,8 +5,9 @@
  
  URP 10.7.0
  
-| Scene | Image | Description | - |- |
-| `development of Lychnis coronaria` | ![](images/s07-development of Lychnis coronaria.gif) |![](images/s07-development of Lychnis coronaria.mp4) | 生长中的植被 |
+| Scene | Image | Description |
+| --- | - | --- |
+| `development of Lychnis coronaria` | ![](images/s07.gif) | 生长中的植被 |
 | `s01-synthesis` | ![](images/s01-branching2.png) | 合成体 |
 | `s01-branching` | ![](images/s01-branching.png) | 分支结构 |
 | `s01-branching1` | ![](images/s01-branching1.png) | 分支结构 |
