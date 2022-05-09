@@ -20,4 +20,6 @@ public class TemplateShape
     public int shapeIndex;
     public Mesh sharedMesh;
     public Material material;
+    public float scale = 1.0f;
+    public bool iterScale = false;
 }

@@ -39,13 +39,12 @@ namespace LSystem.Scripts.FillShape
             }
             
             int meshIndex = 0;
+            Dictionary<int,SaveMeshNode> saveMeshNodes = new Dictionary<int, SaveMeshNode>();
             for (int i = 0; i < generateMeshData.subMeshDatas.Count; i++)
             {
                 var sub = this.subMeshFilter[meshIndex];
                 if (generateMeshData.subMeshDatas[i].vector3s.Count < 3)
                 {
-                    // Debug.LogError("vertex count small 3");
-                    // sub.gameObject.SetActive(false);
                     continue;
                 }
 
@@ -54,19 +53,28 @@ namespace LSystem.Scripts.FillShape
 
                 generateMeshData.subMeshDatas[i].Normalize();
                 sub.transform.localPosition = generateMeshData.subMeshDatas[i].centerPos;
-                int[] triangles = GetTriangles(generateMeshData.subMeshDatas[i].vector3s,out var uvs);
+                
+                if (!saveMeshNodes.TryGetValue(generateMeshData.subMeshDatas[i].vector3s.Count, out var saveMeshNode))
+                {
+                    int[] triangles = GetTriangles(generateMeshData.subMeshDatas[i].vector3s,out var uvs);
+                    saveMeshNode = new SaveMeshNode();
+                    saveMeshNode.triangles = triangles;
+                    saveMeshNode.uvs = uvs;
+                    saveMeshNodes.Add(generateMeshData.subMeshDatas[i].vector3s.Count,saveMeshNode);
+                }
                 var sharedMesh = sub.sharedMesh;
+                sharedMesh.name = generateMeshData.subMeshDatas[i].vector3s.Count + "";
                 sharedMesh.Clear();
                 sharedMesh.vertices = generateMeshData.subMeshDatas[i].vector3s.ToArray();
-                sharedMesh.uv = uvs;
+                sharedMesh.uv = saveMeshNode.uvs;
                 if (shapeSetting.meshTopology == MeshTopology.Lines)
                 {
-                    var lines = ConvertTriangleToLine(triangles);
+                    var lines = ConvertTriangleToLine(saveMeshNode.triangles);
                     sharedMesh.SetIndices(lines, MeshTopology.Lines, 0);
                 }
                 else
                 {
-                    sharedMesh.triangles = triangles;
+                    sharedMesh.triangles = saveMeshNode.triangles;
                     sharedMesh.RecalculateNormals();
                     sharedMesh.RecalculateTangents();
                 }
@@ -84,30 +92,46 @@ namespace LSystem.Scripts.FillShape
                 var shapeKey = generateMeshData.subPredefineDatas[i].shapeKey;
                 var shapeIndex = (int) generateMeshData.subPredefineDatas[i].preParam;
                 var shape = GetColorTemplateShape(shapeKey, shapeIndex);
+                var useDefalutShape = false;
                 if (shape == null)
                 {
-                    shape = GetColorTemplateShape(shapeKey, 0);    
+                    shape = GetColorTemplateShape(shapeKey, 0);
+                    useDefalutShape = true;
                 }
                 if (shape != null)
                 {
                     sub.sharedMesh = UnityEngine.Object.Instantiate(shape.sharedMesh);
                     sub.GetComponent<MeshRenderer>().sharedMaterial = shape.material;
+                    
+                    if (shape.iterScale && useDefalutShape)
+                    {
+                        var preParam = generateMeshData.subPredefineDatas[i].preParam;
+                        var scale = Vector3.one;
+                        if (preParam > 0)
+                        {
+                            var scaleFactor = 1/preParam;
+                            scale = (new Vector3(scaleFactor, scaleFactor, scaleFactor));
+                        }
+                        sub.transform.localScale =  shape.scale*scale;
+                    }
+                    else
+                    {
+                        sub.transform.localScale = Vector3.one* shape.scale;
+                    }
                 }
                 else
                 {
                     Debug.LogError($"not find shape:{shapeKey} key:{shapeIndex}");
                 }
 
-                // var preParam = generateMeshData.subPredefineDatas[i].preParam;
-                // var scale = Vector3.one;
-                // if (preParam > 0)
-                // {
-                //     var scaleFactor = preParam;
-                //     scale = (new Vector3(scaleFactor,scaleFactor,scaleFactor));
-                // }
-                //
-                sub.transform.localScale = Vector3.one;
+                
             }
+        }
+
+        public class SaveMeshNode
+        {
+            public int[] triangles;
+            public Vector2[] uvs;
         }
 
         private TemplateShape GetColorTemplateShape(char shapeKey, int preParam)

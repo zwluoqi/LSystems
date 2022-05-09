@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityTools.MeshTools;
 
 namespace LSystem.Scripts.FillShape
 {
@@ -24,141 +25,37 @@ namespace LSystem.Scripts.FillShape
         
          protected int[] GetTriangles(List<Vector3> vector3s,out Vector2[] uvs)
             {
-               
+                if (vector3s.Count < 3)
+                {
+                    throw new NotImplementedException("not support vertex small 3");
+                }
+
+                if (vector3s.Count > 3)
+                {
+                    var DelaunayTriangles = Delaunay3DTools.Delaunay3DPoint(vector3s);
+                    uvs = DelaunayTriangles.Item2;
+                    return DelaunayTriangles.Item1;
+                }
+
                 if (vector3s.Count == 8)
                 {
-                    int[] triangles = new int[6*3];
-                    uvs = new Vector2[vector3s.Count];
-                    int i = 0;
-                    triangles[i++] = 0;
-                    triangles[i++] = 1;
-                    triangles[i++] = 7;
-                        
-                    triangles[i++] = 1;
-                    triangles[i++] = 2;
-                    triangles[i++] = 3;
-                        
-                    triangles[i++] = 3;
-                    triangles[i++] = 4;
-                    triangles[i++] = 5;
-                        
-                    triangles[i++] = 5;
-                    triangles[i++] = 6;
-                    triangles[i++] = 7;
-                    
-                    triangles[i++] = 7;
-                    triangles[i++] = 1;
-                    triangles[i++] = 5;
-                    
-                    triangles[i++] = 1;
-                    triangles[i++] = 3;
-                    triangles[i++] = 5;
-                        
-                    uvs[0] = new Vector2(0,0.5f);
-                    uvs[1] = new Vector2(1.0f/4.0f,1.0f/4.0f);
-                    uvs[2] = new Vector2(2.0f/4.0f,0.0f);
-                    uvs[3] = new Vector2(3.0f/4.0f,1.0f/4.0f);
-                    uvs[4] = new Vector2(4.0f/4.0f,0.5f);
-                    
-                    uvs[5] = new Vector2(3.0f/4.0f,3.0f/4.0f);
-                    uvs[6] = new Vector2(2.0f/4.0f,1);
-                    uvs[7] = new Vector2(1.0f/4.0f,3.0f/4.0f);
-                        
-                    return triangles;
+                    return PlaneGemotryTools.GetTriangles8(vector3s, out uvs);
                 }
                 else if (vector3s.Count == 7)
                 {
-                    int[] triangles = new int[5*3];
-                    uvs = new Vector2[vector3s.Count];
-                    int i = 0;
-                    triangles[i++] = 0;
-                    triangles[i++] = 1;
-                    triangles[i++] = 6;
-                        
-                    triangles[i++] = 1;
-                    triangles[i++] = 2;
-                    triangles[i++] = 6;
-                        
-                    triangles[i++] = 2;
-                    triangles[i++] = 3;
-                    triangles[i++] = 4;
-                        
-                    triangles[i++] = 4;
-                    triangles[i++] = 5;
-                    triangles[i++] = 2;
-                    
-                    triangles[i++] = 5;
-                    triangles[i++] = 6;
-                    triangles[i++] = 2;
-                        
-                    uvs[0] = new Vector2(0,0.5f);
-                    uvs[1] = new Vector2(1.0f/3.0f,2/6.0f);
-                    uvs[2] = new Vector2(2.0f/3.0f,3/6.0f);
-                    uvs[3] = new Vector2(1,0.0f);
-                    uvs[4] = new Vector2(1,1.0f);
-                    uvs[5] = new Vector2(2.0f/3.0f,5/6.0f);
-                    uvs[6] = new Vector2(1.0f/3.0f,4/6.0f);
-                        
-                    return triangles;
+                    return PlaneGemotryTools.GetTriangles7(vector3s, out uvs);
                 }
                 else if (vector3s.Count == 6)
                 {
-                    int[] triangles = new int[4*3];
-                    uvs = new Vector2[vector3s.Count];
-                    int i = 0;
-                    triangles[i++] = 0;
-                    triangles[i++] = 1;
-                    triangles[i++] = 5;
-                        
-                    triangles[i++] = 5;
-                    triangles[i++] = 1;
-                    triangles[i++] = 2;
-                        
-                    triangles[i++] = 2;
-                    triangles[i++] = 4;
-                    triangles[i++] = 5;
-                        
-                    triangles[i++] = 4;
-                    triangles[i++] = 2;
-                    triangles[i++] = 3;
-                        
-                    uvs[0] = new Vector2(0,0.5f);
-                    uvs[1] = new Vector2(1.0f/3.0f,0.0f);
-                    uvs[2] = new Vector2(2.0f/3.0f,0.0f);
-                    uvs[3] = new Vector2(1,0.5f);
-                    uvs[4] = new Vector2(2.0f/3.0f,1.0f);
-                    uvs[5] = new Vector2(1.0f/3.0f,1.0f);
-                        
-                    return triangles;
-                }
-                else if (vector3s.Count == 3)
-                {
-                    uvs = new Vector2[vector3s.Count];
-                    uvs[0] = new Vector2(0,0);
-                    uvs[1] = new Vector2(1,0);
-                    uvs[2] = new Vector2(1,1);
-                    return vector3s.Select(((vector3, i) => i)).ToArray();
+                    return PlaneGemotryTools.GetTriangles6(vector3s, out uvs);
                 }
                 else if (vector3s.Count == 4)
                 {
-                    int[] triangles = new int[2*3];
-                    uvs = new Vector2[vector3s.Count];
-                    int i = 0;
-                    triangles[i++] = 0;
-                    triangles[i++] = 1;
-                    triangles[i++] = 2;
-                        
-                    triangles[i++] = 2;
-                    triangles[i++] = 3;
-                    triangles[i++] = 0;
-                    
-                        
-                    uvs[0] = new Vector2(0,0.5f);
-                    uvs[1] = new Vector2(0.5f,0.0f);
-                    uvs[2] = new Vector2(1,0.5f);
-                    uvs[3] = new Vector2(.5f,.5f);
-                        
-                    return triangles;
+                    return PlaneGemotryTools.GetTriangles4(vector3s, out uvs);
+                }
+                else if (vector3s.Count == 3)
+                {
+                    return PlaneGemotryTools.GetTriangles3(vector3s, out uvs);
                 }
                 else
                 {

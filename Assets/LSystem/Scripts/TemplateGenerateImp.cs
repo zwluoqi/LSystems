@@ -352,13 +352,12 @@ namespace LSystem.Scripts
                     {
                         v = (float)iv.Value;
                     }
-
+                    AddCell(shapeSetting,v);
+                    UpdatePos(shapeSetting,v);
                     if (startSavePos)
                     {
                         SavePos(shapeSetting);
                     }
-                    AddCell(shapeSetting,v);
-                    UpdatePos(shapeSetting,v);
                     break;
                 case '∼':
                     Debug.LogWarning("绘制几何体");
