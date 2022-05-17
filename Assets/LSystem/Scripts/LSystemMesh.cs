@@ -17,7 +17,7 @@ public class LSystemMesh : MonoBehaviour,ISettingUpdate
     private LSystemGenerate _lSystemGenerate = new LSystemGenerate();
     private Material LitMaterial;
 
-    void GenerateMesh()
+    public void GenerateMesh()
     {
         var generateMeshData = _lSystemGenerate.Generate(shapeSetting);
 

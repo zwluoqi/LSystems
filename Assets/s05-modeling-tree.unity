@@ -88044,6 +88044,7 @@ GameObject:
   - component: {fileID: 1764915234}
   - component: {fileID: 1764915233}
   - component: {fileID: 1764915235}
+  - component: {fileID: 1764915236}
   m_Layer: 0
   m_Name: s05-modeling-tree
   m_TagString: Untagged
@@ -90663,6 +90664,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speedAngle: 10
+--- !u!114 &1764915236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1764915232}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1229aa2d247fd40afa18f2a260ec9721, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxIter: 5
+  curIter: 7
 --- !u!1 &1767699607
 GameObject:
   m_ObjectHideFlags: 0

@@ -18,7 +18,7 @@ MonoBehaviour:
   angle: 67.21111
   lengthFactor: 1
   widthIncrementFactor: 0
-  maxIter: 6
+  maxIter: 10
   size: {x: 0.01, y: 10}
   defaultSize: {x: 40.87, y: 1}
   templateRule: 

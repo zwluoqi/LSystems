@@ -18,6 +18,7 @@
 
     uniform half _WindQuality;
     uniform half _WindEnabled;
+    uniform half _TriPlanarScale;
 
     #include "SpeedTreeWind.cginc"
 #endif

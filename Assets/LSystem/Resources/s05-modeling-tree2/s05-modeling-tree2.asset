@@ -33,3 +33,4 @@ MonoBehaviour:
   - lr=1.109
   - vr=1.732
   initRule: '!(1)F(200)/(45)A'
+  predefineShapes: []

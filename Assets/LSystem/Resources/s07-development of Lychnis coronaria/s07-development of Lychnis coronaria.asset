@@ -19,7 +19,7 @@ MonoBehaviour:
   lengthFactor: 1
   widthIncrementFactor: 0
   maxIter: 30
-  size: {x: 0.06, y: 0.1}
+  size: {x: 0.2, y: 0.1}
   defaultSize: {x: 1, y: 1}
   templateRule: 
   templateRules:

@@ -12,6 +12,8 @@ Shader "Custom/Nature/SpeedTree7"
         [MaterialEnum(None,0,Fastest,1,Fast,2,Better,3,Best,4,Palm,5)] _WindQuality("Wind Quality", Range(0,5)) = 0
 
         _WindEnabled("_WindEnabled", Range(0,1)) = 0
+        _TriPlanarScale("_TriPlanarScale", Range(0,10)) = 1
+
 
         _ST_WindVector("_ST_WindVector", Vector) = (0,0,0,0)
         _ST_WindGlobal("_ST_WindGlobal", Vector) = (0,0,0,0)
