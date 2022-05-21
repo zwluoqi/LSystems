@@ -89,9 +89,12 @@ void InitializeInputData(SpeedTreeVertexOutput input, half3 normalTS, out InputD
     inputData.positionWS = input.positionWS.xyz;
 
     #ifdef EFFECT_BUMP
-        // inputData.normalWS = TransformTangentToWorld(normalTS, half3x3(input.tangentWS.xyz, input.bitangentWS.xyz, input.normalWS.xyz));
-        // inputData.normalWS = NormalizeNormalPerPixel(inputData.normalWS);
+    #ifdef GEOM_TYPE_BRANCH
         inputData.normalWS = triplanarNormal(input.positionWS,input.normalWS,_TriPlanarScale,0,TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap));
+    #else
+        inputData.normalWS = TransformTangentToWorld(normalTS, half3x3(input.tangentWS.xyz, input.bitangentWS.xyz, input.normalWS.xyz));
+        inputData.normalWS = NormalizeNormalPerPixel(inputData.normalWS);
+    #endif
         inputData.viewDirectionWS = half3(input.normalWS.w, input.tangentWS.w, input.bitangentWS.w);
     #else
         inputData.normalWS = NormalizeNormalPerPixel(input.normalWS);
@@ -136,9 +139,9 @@ half4 SpeedTree7Frag(SpeedTreeVertexOutput input) : SV_Target
     half2 uv = input.uvHueVariation.xy;
     half4 diffuse=0;
     #ifdef GEOM_TYPE_BRANCH
-    diffuse = triplanar(input.positionWS,input.normalWS,_TriPlanarScale,TEXTURE2D_ARGS(_MainTex, sampler_MainTex));
+        diffuse = triplanar(input.positionWS,input.normalWS,_TriPlanarScale,TEXTURE2D_ARGS(_MainTex, sampler_MainTex));
     #else
-    diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_MainTex, sampler_MainTex));
+        diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_MainTex, sampler_MainTex));
     #endif
     
     diffuse.a *= _Color.a;
